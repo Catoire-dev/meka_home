@@ -103,7 +103,7 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [x] Étape 2 — Modèles (`Vehicle`, `Maintenance`, `MaintenanceSchedule`, `Document`, `Reminder`...)
 - [x] Étape 3 — Couche API (services, repositories, `Result<T>`, gestion d'erreurs)
 - [x] Étape 4 — Écran Accueil (résumé véhicules actuels + prochaines échéances)
-- [ ] Étape 5 — Liste des véhicules (filtres catégorie/statut, recherche, tri)
+- [x] Étape 5 — Liste des véhicules (filtres catégorie/statut, recherche, tri)
 - [ ] Étape 6 — Ajout / modification d'un véhicule
 - [ ] Étape 7 — Fiche détaillée du véhicule
 - [ ] Étape 8 — Entretiens (historique + échéances)
@@ -111,4 +111,4 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [ ] Étape 10 — Notifications / rappels (pas de push natif dans un premier temps)
 - [ ] Étape 11 — Polissage responsive et UX
 
-Prochaine étape à la reprise : **Étape 5 — Liste des véhicules**.
+Prochaine étape à la reprise : **Étape 6 — Ajout / modification d'un véhicule**.

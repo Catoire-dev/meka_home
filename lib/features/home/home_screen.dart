@@ -5,9 +5,9 @@ import '../../core/constants/breakpoints.dart';
 import '../../core/network/result.dart';
 import '../../models/reminder/reminder.dart';
 import '../../models/vehicle/vehicle.dart';
+import '../../core/widgets/vehicle_summary_card.dart';
 import 'home_providers.dart';
 import 'widgets/upcoming_reminders_section.dart';
-import 'widgets/vehicle_summary_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});

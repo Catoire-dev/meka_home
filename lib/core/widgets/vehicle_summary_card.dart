@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/media/image_url_resolver.dart';
-import '../../../core/widgets/vehicle_placeholder.dart';
-import '../../../models/reminder/reminder.dart';
-import '../../../models/vehicle/vehicle.dart';
+import '../../models/reminder/reminder.dart';
+import '../../models/vehicle/vehicle.dart';
+import '../media/image_url_resolver.dart';
+import 'vehicle_placeholder.dart';
 
-/// Carte résumant un véhicule actuel : photo, identité, kilométrage,
-/// commentaire et prochaine échéance d'entretien le cas échéant.
+/// Carte résumant un véhicule : photo, identité, kilométrage, commentaire
+/// et prochaine échéance d'entretien le cas échéant.
 class VehicleSummaryCard extends ConsumerWidget {
   const VehicleSummaryCard({
     super.key,
