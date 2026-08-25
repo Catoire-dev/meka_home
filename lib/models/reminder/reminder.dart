@@ -67,4 +67,32 @@ class Reminder {
       dueMileage: schedule.dueMileage,
     );
   }
+
+  static int _urgencyRank(ReminderUrgency urgency) => switch (urgency) {
+    ReminderUrgency.overdue => 0,
+    ReminderUrgency.dueSoon => 1,
+    ReminderUrgency.upcoming => 2,
+  };
+
+  /// Trie par urgence (en retard d'abord), puis par proximité de la date
+  /// ou du kilométrage.
+  static int compareByUrgency(Reminder a, Reminder b) {
+    final urgencyCompare = _urgencyRank(
+      a.urgency,
+    ).compareTo(_urgencyRank(b.urgency));
+    if (urgencyCompare != 0) return urgencyCompare;
+
+    if (a.dueDate != null && b.dueDate != null) {
+      return a.dueDate!.compareTo(b.dueDate!);
+    }
+    if (a.dueDate != null) return -1;
+    if (b.dueDate != null) return 1;
+
+    if (a.dueMileage != null && b.dueMileage != null) {
+      return a.dueMileage!.compareTo(b.dueMileage!);
+    }
+    if (a.dueMileage != null) return -1;
+    if (b.dueMileage != null) return 1;
+    return 0;
+  }
 }

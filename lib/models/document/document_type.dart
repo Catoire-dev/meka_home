@@ -10,6 +10,17 @@ enum DocumentType {
   autre,
 }
 
+extension DocumentTypeLabel on DocumentType {
+  String get label => switch (this) {
+    DocumentType.carteGrise => 'Carte grise',
+    DocumentType.assurance => 'Assurance',
+    DocumentType.controleTechnique => 'Contrôle technique',
+    DocumentType.facture => 'Facture',
+    DocumentType.entretien => 'Entretien',
+    DocumentType.autre => 'Autre',
+  };
+}
+
 extension DocumentTypeJson on DocumentType {
   /// Valeur snake_case attendue par le backend, pour les appels qui
   /// n'utilisent pas la sérialisation générée de [Document] (upload

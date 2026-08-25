@@ -6,7 +6,11 @@ import '../../../models/vehicle/vehicle.dart';
 /// Ligne représentant une échéance d'entretien à venir, avec son niveau
 /// d'urgence, le véhicule concerné et la date/le kilométrage visés.
 class ReminderTile extends StatelessWidget {
-  const ReminderTile({super.key, required this.reminder, required this.vehicle});
+  const ReminderTile({
+    super.key,
+    required this.reminder,
+    required this.vehicle,
+  });
 
   final Reminder reminder;
   final Vehicle vehicle;
@@ -38,10 +42,7 @@ class ReminderTile extends StatelessWidget {
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        radius: 6,
-        backgroundColor: urgencyColor,
-      ),
+      leading: CircleAvatar(radius: 6, backgroundColor: urgencyColor),
       title: Text(reminder.type.label),
       subtitle: Text('${vehicle.customName} · $_dueLabel'),
     );

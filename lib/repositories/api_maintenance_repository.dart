@@ -14,6 +14,12 @@ final maintenanceRepositoryProvider = Provider<MaintenanceRepository>((ref) {
   return ApiMaintenanceRepository(MaintenanceApiService(client), client);
 });
 
+/// Liste de référence des types d'entretien, partagée par les écrans qui
+/// en ont besoin (échéances, historique, formulaires).
+final maintenanceTypesProvider = FutureProvider<Result<List<MaintenanceType>>>(
+  (ref) => ref.watch(maintenanceRepositoryProvider).getMaintenanceTypes(),
+);
+
 class ApiMaintenanceRepository implements MaintenanceRepository {
   ApiMaintenanceRepository(this._service, this._client);
 

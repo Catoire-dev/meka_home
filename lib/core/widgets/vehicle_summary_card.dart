@@ -13,10 +13,12 @@ class VehicleSummaryCard extends ConsumerWidget {
     super.key,
     required this.vehicle,
     this.nextReminder,
+    this.onTap,
   });
 
   final Vehicle vehicle;
   final Reminder? nextReminder;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,89 +28,97 @@ class VehicleSummaryCard extends ConsumerWidget {
         .resolve(vehicle.photoFilename);
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: SizedBox(
-                width: 72,
-                height: 72,
-                child: photoUrl != null
-                    ? Image.network(
-                        photoUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            VehiclePlaceholder(category: vehicle.category),
-                      )
-                    : VehiclePlaceholder(category: vehicle.category),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 72,
+                  height: 72,
+                  child: photoUrl != null
+                      ? Image.network(
+                          photoUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              VehiclePlaceholder(category: vehicle.category),
+                        )
+                      : VehiclePlaceholder(category: vehicle.category),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(vehicle.customName, style: theme.textTheme.titleMedium),
-                  Text(
-                    '${vehicle.brand} ${vehicle.model}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 4,
-                    children: [
-                      if (vehicle.licensePlate != null)
-                        Text(
-                          vehicle.licensePlate!,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      Text(
-                        '${vehicle.mileage} km',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                  if (vehicle.comment != null && vehicle.comment!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      vehicle.comment!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontStyle: FontStyle.italic,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      vehicle.customName,
+                      style: theme.textTheme.titleMedium,
                     ),
-                  ],
-                  if (nextReminder != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
+                    Text(
+                      '${vehicle.brand} ${vehicle.model}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 4,
                       children: [
-                        Icon(
-                          Icons.build_outlined,
-                          size: 14,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Prochain entretien : ${nextReminder!.type.label}',
+                        if (vehicle.licensePlate != null)
+                          Text(
+                            vehicle.licensePlate!,
                             style: theme.textTheme.bodySmall,
-                            overflow: TextOverflow.ellipsis,
                           ),
+                        Text(
+                          '${vehicle.mileage} km',
+                          style: theme.textTheme.bodySmall,
                         ),
                       ],
                     ),
+                    if (vehicle.comment != null &&
+                        vehicle.comment!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        vehicle.comment!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (nextReminder != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.build_outlined,
+                            size: 14,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Prochain entretien : ${nextReminder!.type.label}',
+                              style: theme.textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -104,11 +104,11 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [x] Étape 3 — Couche API (services, repositories, `Result<T>`, gestion d'erreurs)
 - [x] Étape 4 — Écran Accueil (résumé véhicules actuels + prochaines échéances)
 - [x] Étape 5 — Liste des véhicules (filtres catégorie/statut, recherche, tri)
-- [ ] Étape 6 — Ajout / modification d'un véhicule
-- [ ] Étape 7 — Fiche détaillée du véhicule
+- [x] Étape 6 — Ajout / modification d'un véhicule
+- [x] Étape 7 — Fiche détaillée du véhicule
 - [ ] Étape 8 — Entretiens (historique + échéances)
 - [ ] Étape 9 — Documents
 - [ ] Étape 10 — Notifications / rappels (pas de push natif dans un premier temps)
 - [ ] Étape 11 — Polissage responsive et UX
 
-Prochaine étape à la reprise : **Étape 6 — Ajout / modification d'un véhicule**.
+Prochaine étape à la reprise : **Étape 8 — Entretiens (historique + échéances)**.

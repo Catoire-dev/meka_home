@@ -22,6 +22,10 @@ final allVehiclesProvider = FutureProvider<Result<List<Vehicle>>>((ref) {
   return repo.getVehicles();
 });
 
+final vehicleByIdProvider = FutureProvider.family<Result<Vehicle>, String>(
+  (ref, id) => ref.watch(vehicleRepositoryProvider).getVehicle(id),
+);
+
 final vehicleCategoryFilterProvider = StateProvider<VehicleCategory>(
   (ref) => VehicleCategory.moto,
 );

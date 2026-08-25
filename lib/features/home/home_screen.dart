@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/breakpoints.dart';
 import '../../core/network/result.dart';
@@ -29,7 +30,9 @@ class HomeScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stackTrace) => _ErrorBody(message: '$error'),
           data: (vehiclesResult) => switch (vehiclesResult) {
-            FailureResult(:final failure) => _ErrorBody(message: failure.message),
+            FailureResult(:final failure) => _ErrorBody(
+              message: failure.message,
+            ),
             Success(:final data) => _HomeBody(
               vehicles: data,
               remindersAsync: remindersAsync,
@@ -71,6 +74,7 @@ class _HomeBody extends StatelessWidget {
           child: VehicleSummaryCard(
             vehicle: vehicle,
             nextReminder: firstReminderByVehicle[vehicle.id],
+            onTap: () => context.push('/vehicles/${vehicle.id}'),
           ),
         ),
     ];

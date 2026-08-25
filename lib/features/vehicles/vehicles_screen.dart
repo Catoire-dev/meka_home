@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/network/result.dart';
 import '../../core/widgets/vehicle_summary_card.dart';
@@ -27,10 +28,17 @@ class VehiclesScreen extends ConsumerWidget {
                 ref.read(vehicleSortOptionProvider.notifier).state = value,
             itemBuilder: (context) => [
               for (final option in VehicleSortOption.values)
-                PopupMenuItem(value: option, child: Text('Trier par ${option.label}')),
+                PopupMenuItem(
+                  value: option,
+                  child: Text('Trier par ${option.label}'),
+                ),
             ],
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/vehicles/new'),
+        child: const Icon(Icons.add),
       ),
       body: Column(
         children: [
@@ -51,8 +59,9 @@ class VehiclesScreen extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stackTrace) => Center(child: Text('$error')),
               data: (result) => switch (result) {
-                FailureResult(:final failure) =>
-                  Center(child: Text(failure.message)),
+                FailureResult(:final failure) => Center(
+                  child: Text(failure.message),
+                ),
                 Success(:final data) => _VehiclesList(vehicles: data),
               },
             ),
@@ -154,8 +163,13 @@ class _VehiclesList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: vehicles.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) =>
-          VehicleSummaryCard(vehicle: vehicles[index]),
+      itemBuilder: (context, index) {
+        final vehicle = vehicles[index];
+        return VehicleSummaryCard(
+          vehicle: vehicle,
+          onTap: () => context.push('/vehicles/${vehicle.id}'),
+        );
+      },
     );
   }
 }

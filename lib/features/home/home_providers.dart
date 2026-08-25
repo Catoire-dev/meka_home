@@ -23,30 +23,6 @@ final currentVehiclesProvider = FutureProvider<Result<List<Vehicle>>>((
   };
 });
 
-int _urgencyRank(ReminderUrgency urgency) => switch (urgency) {
-  ReminderUrgency.overdue => 0,
-  ReminderUrgency.dueSoon => 1,
-  ReminderUrgency.upcoming => 2,
-};
-
-int _compareReminders(Reminder a, Reminder b) {
-  final urgencyCompare = _urgencyRank(a.urgency).compareTo(_urgencyRank(b.urgency));
-  if (urgencyCompare != 0) return urgencyCompare;
-
-  if (a.dueDate != null && b.dueDate != null) {
-    return a.dueDate!.compareTo(b.dueDate!);
-  }
-  if (a.dueDate != null) return -1;
-  if (b.dueDate != null) return 1;
-
-  if (a.dueMileage != null && b.dueMileage != null) {
-    return a.dueMileage!.compareTo(b.dueMileage!);
-  }
-  if (a.dueMileage != null) return -1;
-  if (b.dueMileage != null) return 1;
-  return 0;
-}
-
 /// Prochaines échéances d'entretien, toutes véhicules actuels confondus,
 /// triées par urgence puis par proximité de la date/du kilométrage.
 final upcomingRemindersProvider = FutureProvider<Result<List<Reminder>>>((
@@ -58,9 +34,7 @@ final upcomingRemindersProvider = FutureProvider<Result<List<Reminder>>>((
   }
   final vehicles = (vehiclesResult as Success<List<Vehicle>>).data;
 
-  final maintenanceRepo = ref.watch(maintenanceRepositoryProvider);
-
-  final typesResult = await maintenanceRepo.getMaintenanceTypes();
+  final typesResult = await ref.watch(maintenanceTypesProvider.future);
   if (typesResult is FailureResult<List<MaintenanceType>>) {
     return Result.failure(typesResult.failure);
   }
@@ -69,6 +43,7 @@ final upcomingRemindersProvider = FutureProvider<Result<List<Reminder>>>((
       type.id: type,
   };
 
+  final maintenanceRepo = ref.watch(maintenanceRepositoryProvider);
   final reminders = <Reminder>[];
   for (final vehicle in vehicles) {
     final schedulesResult = await maintenanceRepo.getMaintenanceSchedules(
@@ -89,6 +64,6 @@ final upcomingRemindersProvider = FutureProvider<Result<List<Reminder>>>((
     }
   }
 
-  reminders.sort(_compareReminders);
+  reminders.sort(Reminder.compareByUrgency);
   return Result.success(reminders);
 });

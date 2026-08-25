@@ -23,7 +23,9 @@ class ApiVehicleRepository implements VehicleRepository {
   @override
   Future<Result<List<Vehicle>>> getVehicles() => apiGuard(_client, () async {
     final json = await _service.fetchVehicles();
-    return json.map((e) => Vehicle.fromJson(e as Map<String, dynamic>)).toList();
+    return json
+        .map((e) => Vehicle.fromJson(e as Map<String, dynamic>))
+        .toList();
   });
 
   @override
@@ -35,7 +37,8 @@ class ApiVehicleRepository implements VehicleRepository {
   @override
   Future<Result<Vehicle>> createVehicle(Vehicle vehicle) =>
       apiGuard(_client, () async {
-        final json = await _service.createVehicle(vehicle.toJson());
+        final body = vehicle.toJson()..remove('id');
+        final json = await _service.createVehicle(body);
         return Vehicle.fromJson(json);
       });
 
