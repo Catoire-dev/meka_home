@@ -1,0 +1,1 @@
+enum VehicleStatus { current, historical }

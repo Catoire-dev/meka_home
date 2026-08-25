@@ -9,10 +9,19 @@ enum AppEnvironment { development, production }
 /// flutter run --dart-define=APP_ENV=production --dart-define=API_BASE_URL=https://api.example.com
 /// ```
 class AppConfig {
-  const AppConfig({required this.environment, required this.apiBaseUrl});
+  const AppConfig({
+    required this.environment,
+    required this.apiBaseUrl,
+    required this.mediaBaseUrl,
+  });
 
   final AppEnvironment environment;
   final String apiBaseUrl;
+
+  /// Base servant à résoudre les fichiers uploadés (photos, documents) en
+  /// URL affichable. Isolé de [apiBaseUrl] pour permettre, plus tard, un
+  /// stockage externe (S3, CDN...) sans toucher au reste de l'app.
+  final String mediaBaseUrl;
 
   static const _envName = String.fromEnvironment(
     'APP_ENV',
@@ -26,6 +35,10 @@ class AppConfig {
     apiBaseUrl: String.fromEnvironment(
       'API_BASE_URL',
       defaultValue: 'http://localhost:8000/api',
+    ),
+    mediaBaseUrl: String.fromEnvironment(
+      'MEDIA_BASE_URL',
+      defaultValue: 'http://localhost:8000/uploads',
     ),
   );
 

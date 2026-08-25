@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/app_config.dart';
 import '../errors/failure.dart';
+
+final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
 /// Point d'entrée HTTP unique de l'application.
 ///
