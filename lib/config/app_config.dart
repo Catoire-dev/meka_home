@@ -34,11 +34,11 @@ class AppConfig {
         : AppEnvironment.development,
     apiBaseUrl: String.fromEnvironment(
       'API_BASE_URL',
-      defaultValue: 'http://localhost:8000/api',
+      defaultValue: 'http://localhost:8080',
     ),
     mediaBaseUrl: String.fromEnvironment(
       'MEDIA_BASE_URL',
-      defaultValue: 'http://localhost:8000/uploads',
+      defaultValue: 'http://localhost:8080/uploads',
     ),
   );
 

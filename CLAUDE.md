@@ -32,7 +32,7 @@ Configuration d'environnement via `--dart-define`, jamais en dur dans le code :
 ```bash
 flutter run --dart-define=APP_ENV=production --dart-define=API_BASE_URL=https://api.example.com --dart-define=MEDIA_BASE_URL=https://api.example.com/uploads
 ```
-Défauts (dev) : `API_BASE_URL=http://localhost:8000/api`, `MEDIA_BASE_URL=http://localhost:8000/uploads`.
+Défauts (dev) : `API_BASE_URL=http://localhost:8080`, `MEDIA_BASE_URL=http://localhost:8080/uploads`.
 
 ## Architecture
 
@@ -102,7 +102,7 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [x] Étape 1 — Init projet, thème, config, navigation adaptative
 - [x] Étape 2 — Modèles (`Vehicle`, `Maintenance`, `MaintenanceSchedule`, `Document`, `Reminder`...)
 - [x] Étape 3 — Couche API (services, repositories, `Result<T>`, gestion d'erreurs)
-- [ ] Étape 4 — Écran Accueil (résumé véhicules actuels + prochaines échéances)
+- [x] Étape 4 — Écran Accueil (résumé véhicules actuels + prochaines échéances)
 - [ ] Étape 5 — Liste des véhicules (filtres catégorie/statut, recherche, tri)
 - [ ] Étape 6 — Ajout / modification d'un véhicule
 - [ ] Étape 7 — Fiche détaillée du véhicule
@@ -111,4 +111,4 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [ ] Étape 10 — Notifications / rappels (pas de push natif dans un premier temps)
 - [ ] Étape 11 — Polissage responsive et UX
 
-Prochaine étape à la reprise : **Étape 4 — Écran Accueil**.
+Prochaine étape à la reprise : **Étape 5 — Liste des véhicules**.
