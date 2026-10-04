@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
 import '../../core/network/result.dart';
+import '../../core/network/sticky_result_provider.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_status.dart';
@@ -17,12 +18,11 @@ extension VehicleSortOptionLabel on VehicleSortOption {
   };
 }
 
-final allVehiclesProvider = FutureProvider<Result<List<Vehicle>>>((ref) {
-  final repo = ref.watch(vehicleRepositoryProvider);
-  return repo.getVehicles();
-});
+final allVehiclesProvider = stickyResultProvider<List<Vehicle>>(
+  (ref) => ref.watch(vehicleRepositoryProvider).getVehicles(),
+);
 
-final vehicleByIdProvider = FutureProvider.family<Result<Vehicle>, String>(
+final vehicleByIdProvider = stickyResultProviderFamily<Vehicle, String>(
   (ref, id) => ref.watch(vehicleRepositoryProvider).getVehicle(id),
 );
 

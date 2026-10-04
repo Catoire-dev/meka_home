@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/network/api_client.dart';
 import '../core/network/api_guard.dart';
 import '../core/network/result.dart';
+import '../core/network/sticky_result_provider.dart';
 import '../models/maintenance/maintenance.dart';
 import '../models/maintenance/maintenance_schedule.dart';
 import '../models/maintenance/maintenance_type.dart';
@@ -16,7 +17,7 @@ final maintenanceRepositoryProvider = Provider<MaintenanceRepository>((ref) {
 
 /// Liste de référence des types d'entretien, partagée par les écrans qui
 /// en ont besoin (échéances, historique, formulaires).
-final maintenanceTypesProvider = FutureProvider<Result<List<MaintenanceType>>>(
+final maintenanceTypesProvider = stickyResultProvider<List<MaintenanceType>>(
   (ref) => ref.watch(maintenanceRepositoryProvider).getMaintenanceTypes(),
 );
 

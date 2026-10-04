@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/errors/failure.dart';
 import '../../core/media/image_url_resolver.dart';
 import '../../core/network/result.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/vehicle_placeholder.dart';
 import '../../models/document/document.dart';
 import '../../models/document/document_type.dart';
@@ -29,6 +31,14 @@ class VehicleDetailScreen extends ConsumerWidget {
 
   final String vehicleId;
 
+  void _refresh(WidgetRef ref) {
+    ref.invalidate(maintenanceTypesProvider);
+    ref.invalidate(vehicleByIdProvider(vehicleId));
+    ref.invalidate(vehicleMaintenancesProvider(vehicleId));
+    ref.invalidate(vehicleScheduleRemindersProvider(vehicleId));
+    ref.invalidate(vehicleDocumentsProvider(vehicleId));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vehicleAsync = ref.watch(vehicleByIdProvider(vehicleId));
@@ -46,6 +56,11 @@ class VehicleDetailScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            tooltip: 'Recharger',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _refresh(ref),
+          ),
+          IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => context.push('/vehicles/$vehicleId/edit'),
           ),
@@ -53,9 +68,15 @@ class VehicleDetailScreen extends ConsumerWidget {
       ),
       body: vehicleAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(child: Text('$error')),
+        error: (error, stackTrace) => ErrorRetryView(
+          failure: UnknownFailure('$error'),
+          onRetry: () => _refresh(ref),
+        ),
         data: (result) => switch (result) {
-          FailureResult(:final failure) => Center(child: Text(failure.message)),
+          FailureResult(:final failure) => ErrorRetryView(
+            failure: failure,
+            onRetry: () => _refresh(ref),
+          ),
           Success(:final data) => _VehicleDetailBody(vehicle: data),
         },
       ),

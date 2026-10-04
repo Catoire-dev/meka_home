@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../config/app_config.dart';
 import '../errors/failure.dart';
+import 'retry_interceptor.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
@@ -19,6 +20,7 @@ class ApiClient {
           receiveTimeout: const Duration(seconds: 15),
         ),
       ) {
+    _dio.interceptors.add(RetryInterceptor(dio: _dio));
     if (config.isDevelopment) {
       _dio.interceptors.add(
         LogInterceptor(requestBody: true, responseBody: true),

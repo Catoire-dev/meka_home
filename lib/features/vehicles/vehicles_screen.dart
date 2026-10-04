@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/errors/failure.dart';
 import '../../core/network/result.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/vehicle_summary_card.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../models/vehicle/vehicle_category.dart';
@@ -21,6 +23,11 @@ class VehiclesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Véhicules'),
         actions: [
+          IconButton(
+            tooltip: 'Recharger',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(allVehiclesProvider),
+          ),
           PopupMenuButton<VehicleSortOption>(
             icon: const Icon(Icons.sort),
             initialValue: sort,
@@ -57,10 +64,14 @@ class VehiclesScreen extends ConsumerWidget {
           Expanded(
             child: vehiclesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) => Center(child: Text('$error')),
+              error: (error, stackTrace) => ErrorRetryView(
+                failure: UnknownFailure('$error'),
+                onRetry: () => ref.invalidate(allVehiclesProvider),
+              ),
               data: (result) => switch (result) {
-                FailureResult(:final failure) => Center(
-                  child: Text(failure.message),
+                FailureResult(:final failure) => ErrorRetryView(
+                  failure: failure,
+                  onRetry: () => ref.invalidate(allVehiclesProvider),
                 ),
                 Success(:final data) => _VehiclesList(vehicles: data),
               },

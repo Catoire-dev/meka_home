@@ -1,6 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../core/network/result.dart';
+import '../../core/network/sticky_result_provider.dart';
 import '../../models/maintenance/maintenance_schedule.dart';
 import '../../models/maintenance/maintenance_type.dart';
 import '../../models/reminder/reminder.dart';
@@ -9,7 +8,7 @@ import '../../repositories/api_maintenance_repository.dart';
 import '../../repositories/api_vehicle_repository.dart';
 
 /// Véhicules actuellement en service, triés par nom personnalisé.
-final currentVehiclesProvider = FutureProvider<Result<List<Vehicle>>>((
+final currentVehiclesProvider = stickyResultProvider<List<Vehicle>>((
   ref,
 ) async {
   final repo = ref.watch(vehicleRepositoryProvider);
@@ -25,7 +24,7 @@ final currentVehiclesProvider = FutureProvider<Result<List<Vehicle>>>((
 
 /// Prochaines échéances d'entretien, toutes véhicules actuels confondus,
 /// triées par urgence puis par proximité de la date/du kilométrage.
-final upcomingRemindersProvider = FutureProvider<Result<List<Reminder>>>((
+final upcomingRemindersProvider = stickyResultProvider<List<Reminder>>((
   ref,
 ) async {
   final vehiclesResult = await ref.watch(currentVehiclesProvider.future);
@@ -49,6 +48,9 @@ final upcomingRemindersProvider = FutureProvider<Result<List<Reminder>>>((
     final schedulesResult = await maintenanceRepo.getMaintenanceSchedules(
       vehicle.id,
     );
+    if (schedulesResult is FailureResult<List<MaintenanceSchedule>>) {
+      return Result.failure(schedulesResult.failure);
+    }
     if (schedulesResult is! Success<List<MaintenanceSchedule>>) continue;
 
     for (final schedule in schedulesResult.data) {

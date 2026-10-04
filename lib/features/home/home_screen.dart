@@ -3,15 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/breakpoints.dart';
+import '../../core/errors/failure.dart';
 import '../../core/network/result.dart';
 import '../../models/reminder/reminder.dart';
 import '../../models/vehicle/vehicle.dart';
+import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/vehicle_summary_card.dart';
+import '../../repositories/api_maintenance_repository.dart';
 import 'home_providers.dart';
 import 'widgets/upcoming_reminders_section.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
+
+  void _refresh(WidgetRef ref) {
+    ref.invalidate(maintenanceTypesProvider);
+    ref.invalidate(currentVehiclesProvider);
+    ref.invalidate(upcomingRemindersProvider);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,19 +28,31 @@ class HomeScreen extends ConsumerWidget {
     final remindersAsync = ref.watch(upcomingRemindersProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Accueil')),
+      appBar: AppBar(
+        title: const Text('Accueil'),
+        actions: [
+          IconButton(
+            tooltip: 'Recharger',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _refresh(ref),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(currentVehiclesProvider);
-          ref.invalidate(upcomingRemindersProvider);
+          _refresh(ref);
           await ref.read(upcomingRemindersProvider.future);
         },
         child: vehiclesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stackTrace) => _ErrorBody(message: '$error'),
+          error: (error, stackTrace) => ErrorRetryView(
+            failure: UnknownFailure('$error'),
+            onRetry: () => _refresh(ref),
+          ),
           data: (vehiclesResult) => switch (vehiclesResult) {
-            FailureResult(:final failure) => _ErrorBody(
-              message: failure.message,
+            FailureResult(:final failure) => ErrorRetryView(
+              failure: failure,
+              onRetry: () => _refresh(ref),
             ),
             Success(:final data) => _HomeBody(
               vehicles: data,
@@ -142,22 +163,6 @@ class _EmptyVehicles extends StatelessWidget {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorBody extends StatelessWidget {
-  const _ErrorBody({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(message, textAlign: TextAlign.center),
       ),
     );
   }

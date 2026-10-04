@@ -1,6 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../core/network/result.dart';
+import '../../core/network/sticky_result_provider.dart';
 import '../../models/document/document.dart';
 import '../../models/maintenance/maintenance.dart';
 import '../../models/maintenance/maintenance_schedule.dart';
@@ -13,7 +12,7 @@ import 'vehicles_providers.dart';
 
 /// Interventions réalisées sur le véhicule, les plus récentes en premier.
 final vehicleMaintenancesProvider =
-    FutureProvider.family<Result<List<Maintenance>>, String>((
+    stickyResultProviderFamily<List<Maintenance>, String>((
       ref,
       vehicleId,
     ) async {
@@ -30,10 +29,7 @@ final vehicleMaintenancesProvider =
 
 /// Échéances d'entretien planifiées pour ce véhicule, triées par urgence.
 final vehicleScheduleRemindersProvider =
-    FutureProvider.family<Result<List<Reminder>>, String>((
-      ref,
-      vehicleId,
-    ) async {
+    stickyResultProviderFamily<List<Reminder>, String>((ref, vehicleId) async {
       final vehicleResult = await ref.watch(
         vehicleByIdProvider(vehicleId).future,
       );
@@ -73,7 +69,7 @@ final vehicleScheduleRemindersProvider =
     });
 
 final vehicleDocumentsProvider =
-    FutureProvider.family<Result<List<Document>>, String>(
+    stickyResultProviderFamily<List<Document>, String>(
       (ref, vehicleId) =>
           ref.watch(documentRepositoryProvider).getDocuments(vehicleId),
     );
