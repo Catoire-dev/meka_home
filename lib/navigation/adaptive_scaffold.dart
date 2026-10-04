@@ -2,34 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/constants/breakpoints.dart';
-
-class _NavDestination {
-  const _NavDestination({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-}
-
-const _destinations = [
-  _NavDestination(
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home,
-    label: 'Accueil',
-  ),
-  _NavDestination(
-    icon: Icons.directions_car_outlined,
-    selectedIcon: Icons.directions_car,
-    label: 'Véhicules',
-  ),
-];
+import 'hover_navigation_rail.dart';
+import 'nav_destination.dart';
 
 /// Coquille de navigation adaptative : NavigationRail à gauche à partir de
-/// la classe de fenêtre `medium`, NavigationBar en bas en dessous.
+/// la classe de fenêtre `medium` (replié, étendu au survol), NavigationBar en
+/// bas en dessous.
 ///
 /// S'appuie sur un [StatefulNavigationShell] de go_router pour préserver
 /// l'état de chaque branche lors du changement d'onglet.
@@ -57,7 +35,7 @@ class AdaptiveScaffold extends StatelessWidget {
           selectedIndex: navigationShell.currentIndex,
           onDestinationSelected: _onDestinationSelected,
           destinations: [
-            for (final d in _destinations)
+            for (final d in appDestinations)
               NavigationDestination(
                 icon: Icon(d.icon),
                 selectedIcon: Icon(d.selectedIcon),
@@ -68,27 +46,27 @@ class AdaptiveScaffold extends StatelessWidget {
       );
     }
 
-    final extended = width >= AppBreakpoints.expanded;
-
+    // Le rail est superposé au contenu : le survol l'étend par-dessus la page
+    // sans la décaler, seule la largeur repliée est réservée.
     return Scaffold(
-      body: Row(
+      body: Stack(
         children: [
-          NavigationRail(
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: _onDestinationSelected,
-            extended: extended,
-            labelType: extended ? null : NavigationRailLabelType.all,
-            destinations: [
-              for (final d in _destinations)
-                NavigationRailDestination(
-                  icon: Icon(d.icon),
-                  selectedIcon: Icon(d.selectedIcon),
-                  label: Text(d.label),
-                ),
-            ],
+          Padding(
+            padding: EdgeInsetsDirectional.only(
+              start: HoverNavigationRail.compactWidth(context),
+            ),
+            child: navigationShell,
           ),
-          const VerticalDivider(width: 1),
-          Expanded(child: navigationShell),
+          PositionedDirectional(
+            start: 0,
+            top: 0,
+            bottom: 0,
+            child: HoverNavigationRail(
+              destinations: appDestinations,
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: _onDestinationSelected,
+            ),
+          ),
         ],
       ),
     );
