@@ -26,8 +26,9 @@ final vehicleByIdProvider = stickyResultProviderFamily<Vehicle, String>(
   (ref, id) => ref.watch(vehicleRepositoryProvider).getVehicle(id),
 );
 
-final vehicleCategoryFilterProvider = StateProvider<VehicleCategory>(
-  (ref) => VehicleCategory.moto,
+/// Catégorie sélectionnée ; `null` = toutes les catégories.
+final vehicleCategoryFilterProvider = StateProvider<VehicleCategory?>(
+  (ref) => null,
 );
 
 final vehicleStatusFilterProvider = StateProvider<VehicleStatus>(
@@ -48,7 +49,7 @@ Comparator<Vehicle> _comparatorFor(VehicleSortOption sort) => switch (sort) {
 
 List<Vehicle> _applyFilters(
   List<Vehicle> vehicles, {
-  required VehicleCategory category,
+  required VehicleCategory? category,
   required VehicleStatus status,
   required String query,
   required VehicleSortOption sort,
@@ -56,7 +57,8 @@ List<Vehicle> _applyFilters(
   final normalizedQuery = query.trim().toLowerCase();
 
   final filtered = vehicles.where((vehicle) {
-    if (vehicle.category != category || vehicle.status != status) {
+    if ((category != null && vehicle.category != category) ||
+        vehicle.status != status) {
       return false;
     }
     if (normalizedQuery.isEmpty) return true;

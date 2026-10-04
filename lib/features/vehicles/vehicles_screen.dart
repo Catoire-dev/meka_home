@@ -21,7 +21,18 @@ class VehiclesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Véhicules'),
+        title: Row(
+          children: [
+            const Text('Véhicules'),
+            const SizedBox(width: 16),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 280),
+                child: const _SearchField(),
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             tooltip: 'Recharger',
@@ -50,16 +61,15 @@ class VehiclesScreen extends ConsumerWidget {
       body: Column(
         children: [
           const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: _SearchField(),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _CategoryFilter(),
-          ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: _StatusFilter(),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Center(
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 12,
+                runSpacing: 12,
+                children: [_CategoryFilter(), _StatusFilter()],
+              ),
+            ),
           ),
           Expanded(
             child: vehiclesAsync.when(
@@ -83,17 +93,65 @@ class VehiclesScreen extends ConsumerWidget {
   }
 }
 
-class _SearchField extends ConsumerWidget {
+class _SearchField extends ConsumerStatefulWidget {
   const _SearchField();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return TextField(
-      onChanged: (value) =>
-          ref.read(vehicleSearchQueryProvider.notifier).state = value,
-      decoration: const InputDecoration(
-        hintText: 'Rechercher un véhicule...',
-        prefixIcon: Icon(Icons.search),
+  ConsumerState<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends ConsumerState<_SearchField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: ref.read(vehicleSearchQueryProvider),
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _setQuery(String value) =>
+      ref.read(vehicleSearchQueryProvider.notifier).state = value;
+
+  void _clear() {
+    _controller.clear();
+    _setQuery('');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _controller,
+      builder: (context, value, _) => TextField(
+        controller: _controller,
+        onChanged: _setQuery,
+        style: Theme.of(context).textTheme.bodyMedium,
+        decoration: InputDecoration(
+          hintText: 'Rechercher...',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 36,
+            minHeight: 36,
+          ),
+          suffixIcon: value.text.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: 'Effacer',
+                  icon: const Icon(Icons.close, size: 18),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _clear,
+                ),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 36,
+            minHeight: 36,
+          ),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: 8,
+          ),
+        ),
       ),
     );
   }
@@ -112,8 +170,13 @@ class _CategoryFilter extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(vehicleCategoryFilterProvider);
 
-    return SegmentedButton<VehicleCategory>(
+    return SegmentedButton<VehicleCategory?>(
       segments: [
+        const ButtonSegment(
+          value: null,
+          label: Text('Tout'),
+          icon: Icon(Icons.apps),
+        ),
         for (final category in VehicleCategory.values)
           ButtonSegment(
             value: category,
