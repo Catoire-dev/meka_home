@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/failure.dart';
 import '../../core/network/result.dart';
-import '../../core/widgets/confirm_dialog.dart';
 import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/form_submit_button.dart';
 import '../../models/organization/address.dart';
@@ -50,7 +49,6 @@ class _OrganizationFormScreenState
   int? _typeId;
   Set<VehicleCategory> _categories = {};
   bool _isMine = false;
-  bool _isArchived = false;
 
   Organization? _existing;
   bool _loading = true;
@@ -137,7 +135,6 @@ class _OrganizationFormScreenState
       _typeId = existing.type?.id;
       _categories = existing.categories.toSet();
       _isMine = existing.isMine;
-      _isArchived = existing.isArchived;
     });
   }
 
@@ -199,7 +196,8 @@ class _OrganizationFormScreenState
               for (final category in _availableCategories)
                 if (_categories.contains(category)) category,
             ],
-      isArchived: _isArchived,
+      // L'archivage se fait depuis la fiche.
+      isArchived: _existing?.isArchived ?? false,
       isMine: _isMine,
     );
 
@@ -219,43 +217,11 @@ class _OrganizationFormScreenState
     }
   }
 
-  Future<void> _delete() async {
-    final confirmed = await showConfirmDialog(
-      context,
-      title: 'Supprimer le garage ?',
-      message:
-          "Impossible s'il est lié à des interventions : archivez-le "
-          'plutôt pour le masquer des listes.',
-    );
-    if (!confirmed || !mounted) return;
-
-    final result = await ref
-        .read(organizationActionsProvider)
-        .delete(_existing!);
-    if (!mounted) return;
-    switch (result) {
-      case Success():
-        Navigator.of(context).pop();
-      case FailureResult(:final failure):
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.isEditing ? 'Modifier le garage' : 'Nouveau garage'),
-        actions: [
-          if (_existing != null)
-            IconButton(
-              tooltip: 'Supprimer',
-              icon: const Icon(Icons.delete_outline),
-              onPressed: _delete,
-            ),
-        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -376,18 +342,6 @@ class _OrganizationFormScreenState
             decoration: const InputDecoration(labelText: 'Commentaire'),
             maxLines: 3,
           ),
-          if (widget.isEditing) ...[
-            const SizedBox(height: 8),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Archivé'),
-              subtitle: const Text(
-                "N'est plus proposé lors de la saisie d'un entretien",
-              ),
-              value: _isArchived,
-              onChanged: (value) => setState(() => _isArchived = value),
-            ),
-          ],
           const SizedBox(height: 24),
           FormSubmitButton(saving: _saving, onPressed: _submit),
         ],

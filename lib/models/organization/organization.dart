@@ -65,7 +65,7 @@ class Organization {
     'category_ids': [for (final category in categories) category.id],
   };
 
-  Organization copyWith({Address? address}) {
+  Organization copyWith({Address? address, bool? isArchived}) {
     return Organization(
       id: id,
       name: name,
@@ -76,7 +76,7 @@ class Organization {
       address: address ?? this.address,
       comment: comment,
       categories: categories,
-      isArchived: isArchived,
+      isArchived: isArchived ?? this.isArchived,
       isMine: isMine,
     );
   }

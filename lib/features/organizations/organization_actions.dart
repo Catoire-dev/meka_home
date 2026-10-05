@@ -28,6 +28,13 @@ class OrganizationActions {
     return result;
   }
 
+  /// Archive (ou désarchive) : un garage archivé n'est plus proposé à la
+  /// saisie d'un entretien mais reste affiché sur les interventions passées.
+  Future<Result<Organization>> setArchived(
+    Organization organization,
+    bool archived,
+  ) => save(organization.copyWith(isArchived: archived));
+
   /// Échoue côté backend si des interventions y font référence : archiver
   /// l'organisation est alors l'alternative.
   Future<Result<void>> delete(Organization organization) async {
