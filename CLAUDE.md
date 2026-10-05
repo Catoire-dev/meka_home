@@ -121,6 +121,7 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [ ] Étape 11 — Polissage responsive et UX
 
 ## Evolution
+- configuration
 - scanner une carte grise
 - suggest address
 - suggest magasin
