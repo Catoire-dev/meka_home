@@ -68,6 +68,24 @@ class Reminder {
     );
   }
 
+  /// Construit les rappels d'un véhicule à partir de ses échéances, triés
+  /// par urgence. Les échéances dont le type est inconnu sont ignorées.
+  static List<Reminder> fromSchedules({
+    required Iterable<MaintenanceSchedule> schedules,
+    required Map<int, MaintenanceType> typeById,
+    required int currentMileage,
+    DateTime? now,
+  }) => [
+    for (final schedule in schedules)
+      if (typeById[schedule.maintenanceTypeId] case final type?)
+        Reminder.fromSchedule(
+          schedule: schedule,
+          type: type,
+          currentMileage: currentMileage,
+          now: now,
+        ),
+  ]..sort(compareByUrgency);
+
   static int _urgencyRank(ReminderUrgency urgency) => switch (urgency) {
     ReminderUrgency.overdue => 0,
     ReminderUrgency.dueSoon => 1,

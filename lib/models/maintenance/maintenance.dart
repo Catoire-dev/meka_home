@@ -37,4 +37,26 @@ class Maintenance {
       _$MaintenanceFromJson(json);
 
   Map<String, dynamic> toJson() => _$MaintenanceToJson(this);
+
+  Maintenance copyWith({
+    int? maintenanceTypeId,
+    DateTime? date,
+    int? mileage,
+    String? description,
+    double? cost,
+    String? provider,
+    String? comment,
+  }) {
+    return Maintenance(
+      id: id,
+      vehicleId: vehicleId,
+      maintenanceTypeId: maintenanceTypeId ?? this.maintenanceTypeId,
+      date: date ?? this.date,
+      mileage: mileage ?? this.mileage,
+      description: description ?? this.description,
+      cost: cost ?? this.cost,
+      provider: provider ?? this.provider,
+      comment: comment ?? this.comment,
+    );
+  }
 }

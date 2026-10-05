@@ -5,26 +5,23 @@ import 'package:go_router/go_router.dart';
 import '../../core/errors/failure.dart';
 import '../../core/media/image_url_resolver.dart';
 import '../../core/network/result.dart';
+import '../../core/utils/date_format.dart';
+import '../../core/widgets/async_result_view.dart';
+import '../../core/widgets/empty_hint.dart';
 import '../../core/widgets/error_retry_view.dart';
+import '../../core/widgets/info_row.dart';
 import '../../core/widgets/vehicle_placeholder.dart';
 import '../../models/document/document.dart';
 import '../../models/document/document_type.dart';
-import '../../models/maintenance/maintenance.dart';
-import '../../models/maintenance/maintenance_type.dart';
-import '../../models/reminder/reminder.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_energy.dart';
 import '../../models/vehicle/vehicle_status.dart';
 import '../../repositories/api_maintenance_repository.dart';
+import '../maintenance/maintenance_providers.dart';
+import '../maintenance/widgets/vehicle_maintenance_section.dart';
 import 'vehicle_detail_providers.dart';
 import 'vehicles_providers.dart';
-
-String _formatDate(DateTime date) {
-  final d = date.day.toString().padLeft(2, '0');
-  final m = date.month.toString().padLeft(2, '0');
-  return '$d/$m/${date.year}';
-}
 
 class VehicleDetailScreen extends ConsumerWidget {
   const VehicleDetailScreen({super.key, required this.vehicleId});
@@ -35,7 +32,7 @@ class VehicleDetailScreen extends ConsumerWidget {
     ref.invalidate(maintenanceTypesProvider);
     ref.invalidate(vehicleByIdProvider(vehicleId));
     ref.invalidate(vehicleMaintenancesProvider(vehicleId));
-    ref.invalidate(vehicleScheduleRemindersProvider(vehicleId));
+    ref.invalidate(vehicleSchedulesProvider(vehicleId));
     ref.invalidate(vehicleDocumentsProvider(vehicleId));
   }
 
@@ -100,7 +97,7 @@ class _VehicleDetailBody extends StatelessWidget {
         const SizedBox(height: 16),
         _RegistrationCard(vehicle: vehicle),
         const SizedBox(height: 16),
-        _MaintenanceCard(vehicleId: vehicle.id),
+        VehicleMaintenanceSection(vehicleId: vehicle.id),
         const SizedBox(height: 16),
         _DocumentsCard(vehicleId: vehicle.id),
       ],
@@ -199,34 +196,6 @@ class _GeneralInfoCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
-        ],
-      ),
-    );
-  }
-}
-
 class _RegistrationCard extends StatelessWidget {
   const _RegistrationCard({required this.vehicle});
 
@@ -237,26 +206,23 @@ class _RegistrationCard extends StatelessWidget {
     final theme = Theme.of(context);
     final rows = <Widget>[
       if (vehicle.licensePlate != null)
-        _InfoRow(label: 'Immatriculation', value: vehicle.licensePlate!),
-      if (vehicle.vin != null) _InfoRow(label: 'VIN', value: vehicle.vin!),
+        InfoRow(label: 'Immatriculation', value: vehicle.licensePlate!),
+      if (vehicle.vin != null) InfoRow(label: 'VIN', value: vehicle.vin!),
       if (vehicle.firstRegistrationDate != null)
-        _InfoRow(
+        InfoRow(
           label: '1ère immatriculation',
-          value: _formatDate(vehicle.firstRegistrationDate!),
+          value: formatDate(vehicle.firstRegistrationDate!),
         ),
       if (vehicle.energy != null)
-        _InfoRow(label: 'Énergie', value: vehicle.energy!.label),
+        InfoRow(label: 'Énergie', value: vehicle.energy!.label),
       if (vehicle.fiscalPower != null)
-        _InfoRow(
-          label: 'Puissance fiscale',
-          value: '${vehicle.fiscalPower} CV',
-        ),
+        InfoRow(label: 'Puissance fiscale', value: '${vehicle.fiscalPower} CV'),
       if (vehicle.powerHp != null)
-        _InfoRow(label: 'Puissance', value: '${vehicle.powerHp} CH'),
+        InfoRow(label: 'Puissance', value: '${vehicle.powerHp} CH'),
       if (vehicle.weightKg != null)
-        _InfoRow(label: 'Poids', value: '${vehicle.weightKg} kg'),
+        InfoRow(label: 'Poids', value: '${vehicle.weightKg} kg'),
       if (vehicle.color != null)
-        _InfoRow(label: 'Couleur', value: vehicle.color!),
+        InfoRow(label: 'Couleur', value: vehicle.color!),
     ];
 
     return Card(
@@ -268,188 +234,12 @@ class _RegistrationCard extends StatelessWidget {
             Text('Carte grise', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             if (rows.isEmpty)
-              Text(
-                'Aucune information renseignée.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              )
+              const EmptyHint('Aucune information renseignée.')
             else
               ...rows,
           ],
         ),
       ),
-    );
-  }
-}
-
-class _MaintenanceCard extends ConsumerWidget {
-  const _MaintenanceCard({required this.vehicleId});
-
-  final String vehicleId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final remindersAsync = ref.watch(
-      vehicleScheduleRemindersProvider(vehicleId),
-    );
-    final maintenancesAsync = ref.watch(vehicleMaintenancesProvider(vehicleId));
-    final typesAsync = ref.watch(maintenanceTypesProvider);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Entretiens', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            Text('Échéances', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 4),
-            remindersAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              ),
-              error: (error, stackTrace) => Text('$error'),
-              data: (result) => switch (result) {
-                FailureResult(:final failure) => Text(failure.message),
-                Success(:final data) => _RemindersList(reminders: data),
-              },
-            ),
-            const SizedBox(height: 16),
-            Text('Historique', style: theme.textTheme.labelLarge),
-            const SizedBox(height: 4),
-            _buildHistory(typesAsync, maintenancesAsync),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHistory(
-    AsyncValue<Result<List<MaintenanceType>>> typesAsync,
-    AsyncValue<Result<List<Maintenance>>> maintenancesAsync,
-  ) {
-    if (typesAsync.isLoading || maintenancesAsync.isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 8),
-        child: LinearProgressIndicator(),
-      );
-    }
-    if (typesAsync.hasError) return Text('${typesAsync.error}');
-    if (maintenancesAsync.hasError) return Text('${maintenancesAsync.error}');
-
-    final typesResult = typesAsync.value;
-    final maintenancesResult = maintenancesAsync.value;
-    if (typesResult == null || maintenancesResult == null) {
-      return const SizedBox.shrink();
-    }
-    if (typesResult is FailureResult<List<MaintenanceType>>) {
-      return Text(typesResult.failure.message);
-    }
-    if (maintenancesResult is FailureResult<List<Maintenance>>) {
-      return Text(maintenancesResult.failure.message);
-    }
-
-    final types = (typesResult as Success<List<MaintenanceType>>).data;
-    final maintenances =
-        (maintenancesResult as Success<List<Maintenance>>).data;
-    return _MaintenancesList(
-      maintenances: maintenances,
-      typeById: {for (final t in types) t.id: t},
-    );
-  }
-}
-
-class _RemindersList extends StatelessWidget {
-  const _RemindersList({required this.reminders});
-
-  final List<Reminder> reminders;
-
-  Color _urgencyColor(ColorScheme colorScheme, ReminderUrgency urgency) =>
-      switch (urgency) {
-        ReminderUrgency.overdue => colorScheme.error,
-        ReminderUrgency.dueSoon => colorScheme.tertiary,
-        ReminderUrgency.upcoming => colorScheme.outline,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (reminders.isEmpty) {
-      return Text(
-        'Aucune échéance planifiée.',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        for (final reminder in reminders)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: CircleAvatar(
-              radius: 6,
-              backgroundColor: _urgencyColor(
-                theme.colorScheme,
-                reminder.urgency,
-              ),
-            ),
-            title: Text(reminder.type.label),
-            subtitle: Text(
-              [
-                if (reminder.dueDate != null) _formatDate(reminder.dueDate!),
-                if (reminder.dueMileage != null) '${reminder.dueMileage} km',
-              ].join(' · '),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _MaintenancesList extends StatelessWidget {
-  const _MaintenancesList({required this.maintenances, required this.typeById});
-
-  final List<Maintenance> maintenances;
-  final Map<int, MaintenanceType> typeById;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (maintenances.isEmpty) {
-      return Text(
-        'Aucun entretien enregistré.',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        for (final maintenance in maintenances)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              typeById[maintenance.maintenanceTypeId]?.label ?? 'Entretien',
-            ),
-            subtitle: Text(
-              [
-                _formatDate(maintenance.date),
-                if (maintenance.mileage != null) '${maintenance.mileage} km',
-                if (maintenance.provider != null) maintenance.provider!,
-              ].join(' · '),
-            ),
-            trailing: maintenance.cost != null
-                ? Text('${maintenance.cost!.toStringAsFixed(2)} €')
-                : null,
-          ),
-      ],
     );
   }
 }
@@ -472,16 +262,9 @@ class _DocumentsCard extends ConsumerWidget {
           children: [
             Text('Documents', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
-            documentsAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: LinearProgressIndicator(),
-              ),
-              error: (error, stackTrace) => Text('$error'),
-              data: (result) => switch (result) {
-                FailureResult(:final failure) => Text(failure.message),
-                Success(:final data) => _DocumentsList(documents: data),
-              },
+            AsyncResultView(
+              value: documentsAsync,
+              builder: (documents) => _DocumentsList(documents: documents),
             ),
           ],
         ),
@@ -497,15 +280,7 @@ class _DocumentsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    if (documents.isEmpty) {
-      return Text(
-        'Aucun document.',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      );
-    }
+    if (documents.isEmpty) return const EmptyHint('Aucun document.');
 
     return Column(
       children: [
@@ -518,7 +293,7 @@ class _DocumentsList extends StatelessWidget {
               [
                 document.filename,
                 if (document.uploadedAt != null)
-                  _formatDate(document.uploadedAt!),
+                  formatDate(document.uploadedAt!),
               ].join(' · '),
             ),
           ),

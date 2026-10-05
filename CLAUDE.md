@@ -50,12 +50,13 @@ UI (features/)  →  Riverpod providers  →  repositories/  →  services/api/ 
   - `constants/breakpoints.dart` : breakpoints responsive centralisés (`AppWindowClass.compact/medium/expanded`, seuils 600/840)
   - `theme/app_theme.dart` : thème Material 3 clair/sombre
   - `utils/json_parsing.dart` : conversions numériques tolérantes pour les champs dont l'encodage backend peut varier (ex. `cost` DECIMAL parfois sérialisé en string)
-  - `widgets/` : composants réutilisables transverses (actuellement vide — y placer tout widget dupliqué à 2+ endroits : carte véhicule, placeholder image, empty state, etc.)
+  - `widgets/` : composants réutilisables transverses (carte véhicule, placeholder, `ReminderTile`, `AsyncResultView`, `DatePickerField`, `EmptyHint`, `InfoRow`, dialogue de confirmation...) — y placer tout widget dupliqué à 2+ endroits
+  - `utils/date_format.dart`, `utils/number_format.dart` : formatage date/montant et parsing des saisies utilisateur
 - **`lib/models/`** — un sous-dossier par agrégat (`vehicle/`, `maintenance/`, `document/`, `reminder/`). Sérialisation via `json_serializable` (`@JsonSerializable(fieldRename: FieldRename.snake)` — JSON backend en snake_case, Dart en camelCase). `Reminder` est un modèle **dérivé**, calculé côté app à partir d'un `MaintenanceSchedule` + kilométrage actuel (pas de sérialisation JSON propre) : détermine l'urgence `upcoming`/`dueSoon`/`overdue` (seuils par défaut 30 jours / 1000 km, configurables par appel).
 - **`lib/services/api/`** — HTTP brut (Dio → JSON), aucune connaissance des modèles Dart. Un service par agrégat.
 - **`lib/repositories/`** — interface abstraite (`abstract interface class XxxRepository`) + implémentation `ApiXxxRepository` qui convertit JSON ↔ modèles et retourne `Result<T>`. Exposées via des `Provider` Riverpod (`xxxRepositoryProvider`). **C'est la seule couche qui changerait si le backend était remplacé.**
 - **`lib/navigation/`** — `AdaptiveScaffold` (StatefulShellRoute de go_router) : `NavigationRail` à partir de 600px, `NavigationBar` en dessous, état de chaque branche préservé.
-- **`lib/features/`** — un dossier par écran majeur (`home/`, `vehicles/`...), écrans + widgets locaux à cet écran uniquement.
+- **`lib/features/`** — un dossier par écran majeur (`home/`, `vehicles/`, `maintenance/`...), écrans + widgets locaux à cet écran uniquement. Les écritures passent par une classe d'actions exposée en `Provider` (ex. `MaintenanceActions`) qui appelle le repository puis invalide les providers concernés — les écrans n'orchestrent pas eux-mêmes les invalidations.
 
 ### Décisions techniques actées
 
@@ -106,9 +107,9 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [x] Étape 5 — Liste des véhicules (filtres catégorie/statut, recherche, tri)
 - [x] Étape 6 — Ajout / modification d'un véhicule
 - [x] Étape 7 — Fiche détaillée du véhicule
-- [ ] Étape 8 — Entretiens (historique + échéances)
+- [x] Étape 8 — Entretiens (historique + échéances)
 - [ ] Étape 9 — Documents
 - [ ] Étape 10 — Notifications / rappels (pas de push natif dans un premier temps)
 - [ ] Étape 11 — Polissage responsive et UX
 
-Prochaine étape à la reprise : **Étape 8 — Entretiens (historique + échéances)**.
+Prochaine étape à la reprise : **Étape 9 — Documents**.

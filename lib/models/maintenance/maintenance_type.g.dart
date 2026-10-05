@@ -12,7 +12,9 @@ MaintenanceType _$MaintenanceTypeFromJson(Map<String, dynamic> json) =>
       code: json['code'] as String,
       label: json['label'] as String,
       icon: json['icon'] as String?,
-      isCustom: json['is_custom'] as bool? ?? false,
+      isCustom: json['is_custom'] == null
+          ? false
+          : parseBool(json['is_custom']),
     );
 
 Map<String, dynamic> _$MaintenanceTypeToJson(MaintenanceType instance) =>

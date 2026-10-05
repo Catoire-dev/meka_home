@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/network/result.dart';
+import '../../core/widgets/date_picker_field.dart';
+import '../../core/widgets/form_submit_button.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_energy.dart';
@@ -113,18 +115,6 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
 
   String? _nullIfEmpty(String value) =>
       value.trim().isEmpty ? null : value.trim();
-
-  Future<void> _pickFirstRegistrationDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _firstRegistrationDate ?? DateTime.now(),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() => _firstRegistrationDate = picked);
-    }
-  }
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -250,31 +240,13 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
             decoration: const InputDecoration(labelText: 'VIN'),
           ),
           const SizedBox(height: 12),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Date de 1ère immatriculation'),
-            subtitle: Text(
-              _firstRegistrationDate == null
-                  ? 'Non renseignée'
-                  : '${_firstRegistrationDate!.day.toString().padLeft(2, '0')}/'
-                        '${_firstRegistrationDate!.month.toString().padLeft(2, '0')}/'
-                        '${_firstRegistrationDate!.year}',
-            ),
-            trailing: Wrap(
-              spacing: 4,
-              children: [
-                if (_firstRegistrationDate != null)
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () =>
-                        setState(() => _firstRegistrationDate = null),
-                  ),
-                IconButton(
-                  icon: const Icon(Icons.calendar_today_outlined),
-                  onPressed: _pickFirstRegistrationDate,
-                ),
-              ],
-            ),
+          DatePickerField(
+            label: 'Date de 1ère immatriculation',
+            value: _firstRegistrationDate,
+            onChanged: (value) =>
+                setState(() => _firstRegistrationDate = value),
+            firstDate: DateTime(1950),
+            lastDate: DateTime.now(),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<VehicleEnergy?>(
@@ -352,16 +324,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
             maxLines: 3,
           ),
           const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saving ? null : _submit,
-            child: _saving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Enregistrer'),
-          ),
+          FormSubmitButton(saving: _saving, onPressed: _submit),
         ],
       ),
     );

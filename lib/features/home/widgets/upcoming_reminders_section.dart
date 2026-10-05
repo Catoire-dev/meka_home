@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/empty_hint.dart';
+import '../../../core/widgets/reminder_tile.dart';
 import '../../../models/reminder/reminder.dart';
 import '../../../models/vehicle/vehicle.dart';
-import 'reminder_tile.dart';
 
 /// Bloc "prochaines échéances" : liste des rappels d'entretien triés par
 /// urgence, tous véhicules actuels confondus. [limit] restreint le nombre
@@ -35,19 +37,18 @@ class UpcomingRemindersSection extends StatelessWidget {
             Text('Prochaines échéances', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             if (shown.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  'Aucune échéance à venir.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: EmptyHint('Aucune échéance à venir.'),
               )
             else
               for (final reminder in shown)
                 if (vehiclesById[reminder.vehicleId] case final vehicle?)
-                  ReminderTile(reminder: reminder, vehicle: vehicle),
+                  ReminderTile(
+                    reminder: reminder,
+                    vehicleName: vehicle.customName,
+                    onTap: () => context.push('/vehicles/${vehicle.id}'),
+                  ),
           ],
         ),
       ),

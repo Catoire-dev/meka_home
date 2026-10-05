@@ -1,11 +1,11 @@
 import '../../core/network/result.dart';
 import '../../core/network/sticky_result_provider.dart';
-import '../../models/maintenance/maintenance_schedule.dart';
 import '../../models/maintenance/maintenance_type.dart';
 import '../../models/reminder/reminder.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../repositories/api_maintenance_repository.dart';
 import '../../repositories/api_vehicle_repository.dart';
+import '../maintenance/maintenance_providers.dart';
 
 /// Véhicules actuellement en service, triés par nom personnalisé.
 final currentVehiclesProvider = stickyResultProvider<List<Vehicle>>((
@@ -37,32 +37,28 @@ final upcomingRemindersProvider = stickyResultProvider<List<Reminder>>((
   if (typesResult is FailureResult<List<MaintenanceType>>) {
     return Result.failure(typesResult.failure);
   }
-  final typeById = {
-    for (final type in (typesResult as Success<List<MaintenanceType>>).data)
-      type.id: type,
-  };
+  final typeById = indexMaintenanceTypes(
+    (typesResult as Success<List<MaintenanceType>>).data,
+  );
 
-  final maintenanceRepo = ref.watch(maintenanceRepositoryProvider);
+  final schedulesResults = await Future.wait([
+    for (final vehicle in vehicles)
+      ref.watch(vehicleSchedulesProvider(vehicle.id).future),
+  ]);
+
   final reminders = <Reminder>[];
-  for (final vehicle in vehicles) {
-    final schedulesResult = await maintenanceRepo.getMaintenanceSchedules(
-      vehicle.id,
-    );
-    if (schedulesResult is FailureResult<List<MaintenanceSchedule>>) {
-      return Result.failure(schedulesResult.failure);
-    }
-    if (schedulesResult is! Success<List<MaintenanceSchedule>>) continue;
-
-    for (final schedule in schedulesResult.data) {
-      final type = typeById[schedule.maintenanceTypeId];
-      if (type == null) continue;
-      reminders.add(
-        Reminder.fromSchedule(
-          schedule: schedule,
-          type: type,
-          currentMileage: vehicle.mileage,
-        ),
-      );
+  for (final (index, schedulesResult) in schedulesResults.indexed) {
+    switch (schedulesResult) {
+      case FailureResult(:final failure):
+        return Result.failure(failure);
+      case Success(:final data):
+        reminders.addAll(
+          Reminder.fromSchedules(
+            schedules: data,
+            typeById: typeById,
+            currentMileage: vehicles[index].mileage,
+          ),
+        );
     }
   }
 

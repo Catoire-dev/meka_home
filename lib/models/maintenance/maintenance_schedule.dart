@@ -29,4 +29,22 @@ class MaintenanceSchedule {
       _$MaintenanceScheduleFromJson(json);
 
   Map<String, dynamic> toJson() => _$MaintenanceScheduleToJson(this);
+
+  MaintenanceSchedule copyWith({
+    int? maintenanceTypeId,
+    DateTime? dueDate,
+    int? dueMileage,
+    String? lastMaintenanceId,
+    String? comment,
+  }) {
+    return MaintenanceSchedule(
+      id: id,
+      vehicleId: vehicleId,
+      maintenanceTypeId: maintenanceTypeId ?? this.maintenanceTypeId,
+      dueDate: dueDate ?? this.dueDate,
+      dueMileage: dueMileage ?? this.dueMileage,
+      lastMaintenanceId: lastMaintenanceId ?? this.lastMaintenanceId,
+      comment: comment ?? this.comment,
+    );
+  }
 }

@@ -1,5 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../core/utils/json_parsing.dart';
+
 part 'maintenance_type.g.dart';
 
 /// Type d'entretien (vidange, pneus, révision...). Liste extensible :
@@ -18,6 +20,7 @@ class MaintenanceType {
   final String code;
   final String label;
   final String? icon;
+  @JsonKey(fromJson: parseBool)
   final bool isCustom;
 
   factory MaintenanceType.fromJson(Map<String, dynamic> json) =>

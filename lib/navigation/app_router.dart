@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/home/home_screen.dart';
+import '../features/maintenance/maintenance_detail_screen.dart';
+import '../features/maintenance/maintenance_form_screen.dart';
+import '../features/maintenance/schedule_form_screen.dart';
 import '../features/vehicles/vehicle_detail_screen.dart';
 import '../features/vehicles/vehicle_form_screen.dart';
 import '../features/vehicles/vehicles_screen.dart';
@@ -46,6 +49,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/vehicles/:id/edit',
         builder: (context, state) =>
             VehicleFormScreen(vehicleId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/vehicles/:id/maintenances/new',
+        builder: (context, state) => MaintenanceFormScreen(
+          vehicleId: state.pathParameters['id']!,
+          fromScheduleId: state.uri.queryParameters['scheduleId'],
+        ),
+      ),
+      GoRoute(
+        path: '/vehicles/:id/maintenances/:maintenanceId',
+        builder: (context, state) => MaintenanceDetailScreen(
+          vehicleId: state.pathParameters['id']!,
+          maintenanceId: state.pathParameters['maintenanceId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/vehicles/:id/maintenances/:maintenanceId/edit',
+        builder: (context, state) => MaintenanceFormScreen(
+          vehicleId: state.pathParameters['id']!,
+          maintenanceId: state.pathParameters['maintenanceId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/vehicles/:id/schedules/new',
+        builder: (context, state) =>
+            ScheduleFormScreen(vehicleId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/vehicles/:id/schedules/:scheduleId/edit',
+        builder: (context, state) => ScheduleFormScreen(
+          vehicleId: state.pathParameters['id']!,
+          scheduleId: state.pathParameters['scheduleId']!,
+        ),
       ),
     ],
   );

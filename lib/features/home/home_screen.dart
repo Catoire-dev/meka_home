@@ -10,6 +10,7 @@ import '../../models/vehicle/vehicle.dart';
 import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/vehicle_summary_card.dart';
 import '../../repositories/api_maintenance_repository.dart';
+import '../maintenance/maintenance_providers.dart';
 import 'home_providers.dart';
 import 'widgets/upcoming_reminders_section.dart';
 
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
   void _refresh(WidgetRef ref) {
     ref.invalidate(maintenanceTypesProvider);
     ref.invalidate(currentVehiclesProvider);
+    ref.invalidate(vehicleSchedulesProvider);
     ref.invalidate(upcomingRemindersProvider);
   }
 
