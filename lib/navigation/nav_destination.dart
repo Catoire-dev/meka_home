@@ -25,4 +25,9 @@ const appDestinations = [
     selectedIcon: Icons.directions_car,
     label: 'Véhicules',
   ),
+  NavDestination(
+    icon: Icons.storefront_outlined,
+    selectedIcon: Icons.storefront,
+    label: 'Mes garages',
+  ),
 ];

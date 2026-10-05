@@ -6,6 +6,7 @@ import '../../../core/utils/number_format.dart';
 import '../../../core/widgets/empty_hint.dart';
 import '../../../models/maintenance/maintenance.dart';
 import '../../../models/maintenance/maintenance_type.dart';
+import '../../../models/organization/organization.dart';
 
 /// Historique chronologique des interventions d'un véhicule (les plus
 /// récentes en premier). Toucher une intervention ouvre son détail.
@@ -14,10 +15,12 @@ class MaintenanceHistoryList extends StatelessWidget {
     super.key,
     required this.maintenances,
     required this.typeById,
+    required this.organizationById,
   });
 
   final List<Maintenance> maintenances;
   final Map<int, MaintenanceType> typeById;
+  final Map<String, Organization> organizationById;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +43,7 @@ class MaintenanceHistoryList extends StatelessWidget {
               [
                 formatDate(maintenance.date),
                 if (maintenance.mileage != null) '${maintenance.mileage} km',
-                ?maintenance.provider,
+                ?organizationById[maintenance.organizationId]?.name,
               ].join(' · '),
             ),
             trailing: maintenance.cost != null

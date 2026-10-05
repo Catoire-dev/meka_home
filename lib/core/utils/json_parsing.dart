@@ -15,3 +15,6 @@ bool parseBool(dynamic value) => switch (value) {
   String() => value == '1' || value.toLowerCase() == 'true',
   _ => false,
 };
+
+/// Booléen encodé en `0/1`, format attendu par le backend (TINYINT).
+int boolToInt(bool value) => value ? 1 : 0;

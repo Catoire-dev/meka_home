@@ -11,8 +11,9 @@ Backend : API HTTP développée séparément par l'utilisateur, volontairement s
 Arborescence fonctionnelle cible :
 ```
 Accueil     → résumé des véhicules actuels + prochaines échéances
-Véhicules   → Moto / Voiture / Autre → En cours / Historique → recherche, filtres, tri
+Véhicules   → catégories (Moto / Voiture / Autre, liste backend) → En cours / Historique → recherche, filtres, tri
 Véhicule    → infos générales, carte grise, kilométrage, photo, commentaire, entretiens, historique, documents
+Mes garages → organisations (garages / intervenants / « Moi-même ») sélectionnables dans les entretiens
 ```
 
 ## Commandes
@@ -52,7 +53,7 @@ UI (features/)  →  Riverpod providers  →  repositories/  →  services/api/ 
   - `utils/json_parsing.dart` : conversions numériques tolérantes pour les champs dont l'encodage backend peut varier (ex. `cost` DECIMAL parfois sérialisé en string)
   - `widgets/` : composants réutilisables transverses (carte véhicule, placeholder, `ReminderTile`, `AsyncResultView`, `DatePickerField`, `EmptyHint`, `InfoRow`, dialogue de confirmation...) — y placer tout widget dupliqué à 2+ endroits
   - `utils/date_format.dart`, `utils/number_format.dart` : formatage date/montant et parsing des saisies utilisateur
-- **`lib/models/`** — un sous-dossier par agrégat (`vehicle/`, `maintenance/`, `document/`, `reminder/`). Sérialisation via `json_serializable` (`@JsonSerializable(fieldRename: FieldRename.snake)` — JSON backend en snake_case, Dart en camelCase). `Reminder` est un modèle **dérivé**, calculé côté app à partir d'un `MaintenanceSchedule` + kilométrage actuel (pas de sérialisation JSON propre) : détermine l'urgence `upcoming`/`dueSoon`/`overdue` (seuils par défaut 30 jours / 1000 km, configurables par appel).
+- **`lib/models/`** — un sous-dossier par agrégat (`vehicle/`, `maintenance/`, `document/`, `reminder/`, `organization/`). Sérialisation via `json_serializable` (`@JsonSerializable(fieldRename: FieldRename.snake)` — JSON backend en snake_case, Dart en camelCase). `Reminder` est un modèle **dérivé**, calculé côté app à partir d'un `MaintenanceSchedule` + kilométrage actuel (pas de sérialisation JSON propre) : détermine l'urgence `upcoming`/`dueSoon`/`overdue` (seuils par défaut 30 jours / 1000 km, configurables par appel).
 - **`lib/services/api/`** — HTTP brut (Dio → JSON), aucune connaissance des modèles Dart. Un service par agrégat.
 - **`lib/repositories/`** — interface abstraite (`abstract interface class XxxRepository`) + implémentation `ApiXxxRepository` qui convertit JSON ↔ modèles et retourne `Result<T>`. Exposées via des `Provider` Riverpod (`xxxRepositoryProvider`). **C'est la seule couche qui changerait si le backend était remplacé.**
 - **`lib/navigation/`** — `AdaptiveScaffold` (StatefulShellRoute de go_router) : `NavigationRail` à partir de 600px, `NavigationBar` en dessous, état de chaque branche préservé.
@@ -64,17 +65,24 @@ UI (features/)  →  Riverpod providers  →  repositories/  →  services/api/ 
 - **HTTP** : Dio (pas `package:http`).
 - **Upload photos/documents** : multipart direct vers le backend ; le backend ne renvoie qu'un nom de fichier, résolu en URL via `ImageUrlResolver`. Ne pas utiliser `dart:io File` dans les services/repositories (incompatible web) — signatures en `List<int> bytes` + `String filename`.
 - **Kilométrage** : saisie manuelle uniquement (pas d'intégration OBD/tierce).
+- **Listes de référence backend** (id INT) : catégories de véhicules (`GET /vehicle-categories`, exposées par `vehicleCategoriesProvider`) et types d'organisation (`GET /organization-types`, `organizationTypesProvider`). Pas d'enum Dart pour ces valeurs ; les icônes (placeholder, filtres, carte garage) sont déduites du nom, avec repli générique.
+- **Catégorie par défaut** : une seule catégorie a `is_default` (« Autre » à l'installation) ; `vehicleCategoriesProvider` la place en dernier (filtres, formulaires) et le formulaire véhicule la présélectionne.
+- **Relations en écriture par identifiant** : en lecture, un véhicule reçoit `category: {id, name, is_default}` et une organisation `categories: [...]` / `type: {...}` (absent pour « Moi-même ») / `address: {...}` ; en écriture ils envoient `vehicle_category_id` / `category_ids` / `organization_type_id` / `address_id` (champs objets exclus du `toJson` généré, ids ajoutés à la main). Booléens envoyés en `0/1`.
+- **Adresses** : ressource séparée (`/addresses`) ; `ApiOrganizationRepository` la crée/met à jour avant l'organisation. Un PUT backend remplace tous les champs : toujours envoyer l'objet complet.
+- **Erreurs backend** : corps `{ "error": "..." }`, lu par `ApiClient.mapError` (codes 400/404/409/422).
 - **Champs carte grise retenus sur `Vehicle`** : immatriculation, marque, modèle, VIN, date de 1ère immatriculation, énergie, puissance fiscale, puissance en CH, poids, couleur — volontairement pas l'exhaustivité d'une carte grise réelle. Ne pas ajouter de champ carte grise supplémentaire sans validation utilisateur.
 
 ## Décisions produit / UX actées
 
 - **Design général** : sobre, moderne, orienté application personnelle (pas un logiciel professionnel). Cartes, sections, hiérarchie visuelle claire, informations importantes mises en avant.
-- **Navigation** : desktop/tablette (≥600px) → `NavigationRail` à gauche (étendu ≥840px). Mobile (<600px) → `NavigationBar` en bas. Seulement 2 destinations principales (Accueil, Véhicules) pour l'instant ; ne pas ajouter d'onglet supplémentaire (ex. "Échéances" dédié mobile) sauf si l'usage réel le justifie une fois l'app en place.
-- **Filtres véhicules (écran Véhicules)** : `SegmentedButton` pour la catégorie (Moto/Voiture/Autre) + `SegmentedButton` ou `FilterChip` secondaire pour le statut (En cours/Historique), sous une barre de recherche texte. Choix fait plutôt qu'une `TabBar` scrollable car il s'agit de deux filtres orthogonaux combinés (catégorie × statut), pas d'un contenu à swiper.
-- **Placeholders image** : si un véhicule n'a pas de photo, afficher un placeholder différent selon la catégorie (moto / voiture / autre) — pas un placeholder générique unique.
+- **Navigation** : desktop/tablette (≥600px) → `NavigationRail` à gauche (étendu ≥840px). Mobile (<600px) → `NavigationBar` en bas. 3 destinations principales (Accueil, Véhicules, Mes garages) ; ne pas ajouter d'onglet supplémentaire (ex. "Échéances" dédié mobile) sauf si l'usage réel le justifie une fois l'app en place.
+- **Filtres véhicules (écran Véhicules)** : `SegmentedButton` pour la catégorie (segments générés depuis `vehicleCategoriesProvider`) + `SegmentedButton` ou `FilterChip` secondaire pour le statut (En cours/Historique), sous une barre de recherche texte. Choix fait plutôt qu'une `TabBar` scrollable car il s'agit de deux filtres orthogonaux combinés (catégorie × statut), pas d'un contenu à swiper.
+- **Catégorie d'un véhicule** : une seule (1-N), `SegmentedButton` dans le formulaire. Les garages restent en N-N (cases à cocher en ligne, `VehicleCategoriesField`).
+- **Placeholders image** : si un véhicule n'a pas de photo, afficher un placeholder différent selon sa catégorie — pas un placeholder générique unique.
 - **Écran Accueil** : cartes des véhicules actuels (photo ou placeholder, nom personnalisé, marque, modèle, immatriculation, kilométrage, commentaire, prochain entretien) + bloc prochaines échéances. Sur desktop, le bloc échéances est visible directement sur l'accueil ; sur mobile, un aperçu limité suffit (pas d'écran dédié pour l'instant, cf. Navigation ci-dessus).
 - **Fiche véhicule** : sections infos générales, infos carte grise, entretiens (réalisés / à venir / en retard), documents.
 - **Historique d'entretien** : chaque intervention = type, date, kilométrage, description, coût, garage/intervenant, commentaire, documents associés. Présentation chronologique.
+- **Garages (`Organization`)** : nom, type (liste backend, non demandé pour « Moi-même »), téléphone, mobile, site web, adresse (rue, complément, CP, ville), commentaire, `is_archived`, `is_mine` (entrée « Moi-même »), catégories de véhicules prises en charge (N-N, cases à cocher). Le garage est **obligatoire** sur une intervention (`organization_id`) ; le formulaire ne propose que les garages non archivés prenant en charge la catégorie du véhicule (« Moi-même » toujours proposé). Un garage référencé par des interventions s'archive plutôt que se supprimer.
 - **Types d'entretien pré-remplis** (voir aussi seed SQL) : vidange, changement de pneus, plaquettes de frein, distribution, contrôle technique, révision, entretien personnalisé, petit entretien (nettoyage/lubrification/tension de chaîne moto). Liste extensible par l'utilisateur (`MaintenanceType.isCustom`).
 - **Échéances d'entretien** : en date, en kilométrage, ou les deux (`MaintenanceSchedule.dueDate` / `dueMileage`). Pas de récupération automatique d'un plan constructeur — saisie manuelle uniquement.
 - **Notifications** : pas de notifications push natives dans un premier temps. L'architecture (`Reminder`) est prête pour brancher `flutter_local_notifications` plus tard sans changer les repositories — se limiter pour l'instant à un affichage des échéances (badges, tri par urgence) dans l'UI.
@@ -90,11 +98,11 @@ UI (features/)  →  Riverpod providers  →  repositories/  →  services/api/ 
 
 ## Base de données
 
-`database/schema.sql` — schéma MySQL/MariaDB de référence (tables `vehicles`, `maintenance_types`, `maintenances`, `maintenance_schedules`, `documents`). Géré par l'utilisateur côté backend ; Flutter n'appelle que les endpoints REST.
+`database/schema.sql` — schéma MySQL/MariaDB de référence (tables `vehicle_categories`, `vehicles`, `maintenance_types`, `addresses`, `organization_types`, `organizations`, `organization_vehicle_categories`, `maintenances`, `maintenance_schedules`, `documents`). Géré par l'utilisateur côté backend ; Flutter n'appelle que les endpoints REST.
 
 ### Routes backend attendues (à créer côté serveur si manquantes)
 
-`GET/POST /vehicles`, `GET/PUT/DELETE /vehicles/:id`, `POST /vehicles/:id/photo` (multipart), `GET /maintenance-types`, `GET/POST /vehicles/:id/maintenances`, `PUT/DELETE /maintenances/:id`, `GET/POST /vehicles/:id/maintenance-schedules`, `PUT/DELETE /maintenance-schedules/:id`, `GET/POST /vehicles/:id/documents` (multipart), `DELETE /documents/:id`.
+`GET/POST /vehicles`, `GET/PUT/DELETE /vehicles/:id`, `POST /vehicles/:id/photo` (multipart), `GET /vehicle-categories`, `GET /maintenance-types`, `GET/POST /vehicles/:id/maintenances`, `GET/PUT/DELETE /vehicles/:id/maintenances/:id`, `GET/POST /vehicles/:id/maintenance-schedules`, `GET/PUT/DELETE /vehicles/:id/maintenance-schedules/:id`, `GET/POST /vehicles/:id/documents` (multipart), `GET/PUT/DELETE /vehicles/:id/documents/:id`, `GET /organization-types`, `GET/POST /organizations`, `GET/PUT/DELETE /organizations/:id`, `POST /addresses`, `PUT /addresses/:id`. Création = 200 (pas de 201).
 
 Si une fonctionnalité nécessite une route non listée ici : la proposer (méthode, chemin, format JSON, raison) avant de l'implémenter côté Flutter, sans coupler le frontend à une implémentation backend spécifique.
 

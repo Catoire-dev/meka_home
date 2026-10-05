@@ -11,6 +11,7 @@ void main() {
         vehicleId: 'v1',
         maintenanceTypeId: 1,
         date: date,
+        organizationId: 'o1',
         mileage: mileage,
       );
 

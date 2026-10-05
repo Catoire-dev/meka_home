@@ -59,6 +59,7 @@ class VehicleMaintenanceSection extends ConsumerWidget {
                 builder: (maintenances) => MaintenanceHistoryList(
                   maintenances: maintenances,
                   typeById: indexMaintenanceTypes(types),
+                  organizationById: ref.watch(organizationByIdProvider),
                 ),
               ),
             ),

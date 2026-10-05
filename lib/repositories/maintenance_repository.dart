@@ -11,7 +11,7 @@ abstract interface class MaintenanceRepository {
   Future<Result<List<Maintenance>>> getMaintenances(String vehicleId);
   Future<Result<Maintenance>> createMaintenance(Maintenance maintenance);
   Future<Result<Maintenance>> updateMaintenance(Maintenance maintenance);
-  Future<Result<void>> deleteMaintenance(String id);
+  Future<Result<void>> deleteMaintenance(Maintenance maintenance);
 
   Future<Result<List<MaintenanceSchedule>>> getMaintenanceSchedules(
     String vehicleId,
@@ -22,5 +22,5 @@ abstract interface class MaintenanceRepository {
   Future<Result<MaintenanceSchedule>> updateMaintenanceSchedule(
     MaintenanceSchedule schedule,
   );
-  Future<Result<void>> deleteMaintenanceSchedule(String id);
+  Future<Result<void>> deleteMaintenanceSchedule(MaintenanceSchedule schedule);
 }

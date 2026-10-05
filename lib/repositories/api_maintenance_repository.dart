@@ -59,6 +59,7 @@ class ApiMaintenanceRepository implements MaintenanceRepository {
   Future<Result<Maintenance>> updateMaintenance(Maintenance maintenance) =>
       apiGuard(_client, () async {
         final json = await _service.updateMaintenance(
+          maintenance.vehicleId,
           maintenance.id,
           maintenance.toJson(),
         );
@@ -66,8 +67,10 @@ class ApiMaintenanceRepository implements MaintenanceRepository {
       });
 
   @override
-  Future<Result<void>> deleteMaintenance(String id) =>
-      apiGuard(_client, () => _service.deleteMaintenance(id));
+  Future<Result<void>> deleteMaintenance(Maintenance maintenance) => apiGuard(
+    _client,
+    () => _service.deleteMaintenance(maintenance.vehicleId, maintenance.id),
+  );
 
   @override
   Future<Result<List<MaintenanceSchedule>>> getMaintenanceSchedules(
@@ -95,6 +98,7 @@ class ApiMaintenanceRepository implements MaintenanceRepository {
     MaintenanceSchedule schedule,
   ) => apiGuard(_client, () async {
     final json = await _service.updateMaintenanceSchedule(
+      schedule.vehicleId,
       schedule.id,
       schedule.toJson(),
     );
@@ -102,6 +106,10 @@ class ApiMaintenanceRepository implements MaintenanceRepository {
   });
 
   @override
-  Future<Result<void>> deleteMaintenanceSchedule(String id) =>
-      apiGuard(_client, () => _service.deleteMaintenanceSchedule(id));
+  Future<Result<void>> deleteMaintenanceSchedule(
+    MaintenanceSchedule schedule,
+  ) => apiGuard(
+    _client,
+    () => _service.deleteMaintenanceSchedule(schedule.vehicleId, schedule.id),
+  );
 }

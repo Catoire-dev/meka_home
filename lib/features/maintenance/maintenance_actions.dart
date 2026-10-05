@@ -111,7 +111,7 @@ class MaintenanceActions {
   }
 
   Future<Result<void>> deleteMaintenance(Maintenance maintenance) async {
-    final result = await _repository.deleteMaintenance(maintenance.id);
+    final result = await _repository.deleteMaintenance(maintenance);
     if (result is Success<void>) {
       _invalidateMaintenances(maintenance.vehicleId);
       // Côté base, les échéances et documents liés perdent leur référence
@@ -134,7 +134,7 @@ class MaintenanceActions {
   }
 
   Future<Result<void>> deleteSchedule(MaintenanceSchedule schedule) async {
-    final result = await _repository.deleteMaintenanceSchedule(schedule.id);
+    final result = await _repository.deleteMaintenanceSchedule(schedule);
     if (result is Success<void>) _invalidateSchedules(schedule.vehicleId);
     return result;
   }

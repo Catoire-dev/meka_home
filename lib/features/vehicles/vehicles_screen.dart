@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../core/errors/failure.dart';
 import '../../core/network/result.dart';
 import '../../core/widgets/error_retry_view.dart';
+import '../../core/widgets/vehicle_category_icon.dart';
 import '../../core/widgets/vehicle_summary_card.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_status.dart';
+import '../../repositories/api_vehicle_repository.dart';
 import 'vehicles_providers.dart';
 
 class VehiclesScreen extends ConsumerWidget {
@@ -37,7 +39,10 @@ class VehiclesScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Recharger',
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(allVehiclesProvider),
+            onPressed: () {
+              ref.invalidate(allVehiclesProvider);
+              ref.invalidate(vehicleCategoriesProvider);
+            },
           ),
           PopupMenuButton<VehicleSortOption>(
             icon: const Icon(Icons.sort),
@@ -160,15 +165,14 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
 class _CategoryFilter extends ConsumerWidget {
   const _CategoryFilter();
 
-  IconData _icon(VehicleCategory category) => switch (category) {
-    VehicleCategory.moto => Icons.two_wheeler,
-    VehicleCategory.voiture => Icons.directions_car,
-    VehicleCategory.autre => Icons.category_outlined,
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selected = ref.watch(vehicleCategoryFilterProvider);
+    // Sans la liste des catégories, le filtre se limite à « Tout ».
+    final categories = switch (ref.watch(vehicleCategoriesProvider).value) {
+      Success(:final data) => data,
+      _ => const <VehicleCategory>[],
+    };
 
     return SegmentedButton<VehicleCategory?>(
       segments: [
@@ -177,11 +181,11 @@ class _CategoryFilter extends ConsumerWidget {
           label: Text('Tout'),
           icon: Icon(Icons.apps),
         ),
-        for (final category in VehicleCategory.values)
+        for (final category in categories)
           ButtonSegment(
             value: category,
-            label: Text(category.label),
-            icon: Icon(_icon(category)),
+            label: Text(category.name),
+            icon: Icon(vehicleCategoryIcon(category)),
           ),
       ],
       selected: {selected},

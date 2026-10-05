@@ -4,12 +4,24 @@
 SET NAMES utf8mb4;
 
 -- =========================================================
+-- Table: vehicle_categories
+-- Catégories de véhicules (liste de référence extensible)
+-- =========================================================
+CREATE TABLE vehicle_categories (
+    id      INT UNSIGNED    NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name        VARCHAR(50)     NOT NULL UNIQUE,
+    is_default  TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Une seule catégorie par défaut'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO vehicle_categories (name, is_default) VALUES ('Moto', 0), ('Voiture', 0), ('Autre', 1);
+
+-- =========================================================
 -- Table: vehicles
 -- =========================================================
 CREATE TABLE vehicles (
     id                          CHAR(36)        NOT NULL PRIMARY KEY,
     custom_name                 VARCHAR(100)    NOT NULL,
-    category                    ENUM('moto','voiture','autre') NOT NULL,
+    vehicle_category_id         INT UNSIGNED    NOT NULL,
     status                      ENUM('current','historical')   NOT NULL DEFAULT 'current',
 
     brand                       VARCHAR(100)    NOT NULL,
@@ -31,7 +43,22 @@ CREATE TABLE vehicles (
     created_at                  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    INDEX idx_vehicles_category_status (category, status)
+    CONSTRAINT fk_vehicles_category
+        FOREIGN KEY (vehicle_category_id) REFERENCES vehicle_categories(id) ON DELETE RESTRICT,
+
+    INDEX idx_vehicles_category_status (vehicle_category_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================================================
+CREATE TABLE vehicle_vehicle_categories (
+    vehicle_id              CHAR(36)        NOT NULL,
+    vehicle_category_id     INT UNSIGNED    NOT NULL,
+
+    PRIMARY KEY (vehicle_id, vehicle_category_id),
+    CONSTRAINT fk_vehicle_categories_vehicle
+        FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
+    CONSTRAINT fk_vehicle_categories_category
+        FOREIGN KEY (vehicle_category_id) REFERENCES vehicle_categories(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================================================
@@ -57,6 +84,78 @@ INSERT INTO maintenance_types (code, label, icon, is_custom) VALUES
     ('entretien_personnalise', 'Entretien personnalisé',           'edit_note',   0);
 
 -- =========================================================
+-- Table: addresses
+-- Adresses postales (utilisées par les organisations)
+-- =========================================================
+CREATE TABLE addresses (
+    id              CHAR(36)        NOT NULL PRIMARY KEY,
+    street          VARCHAR(255)    NOT NULL,
+    complement      VARCHAR(255)    NULL,
+    postal_code     VARCHAR(10)     NOT NULL,
+    city            VARCHAR(100)    NOT NULL,
+    region          VARCHAR(100)    NULL,
+    country         VARCHAR(100)    NOT NULL DEFAULT 'France',
+    latitude        DECIMAL(10,7)   NULL,
+    longitude       DECIMAL(10,7)   NULL,
+
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================================================
+-- Table: organization_types
+-- Types d'organisation (liste de référence extensible)
+-- =========================================================
+CREATE TABLE organization_types (
+    id      INT UNSIGNED    NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name    VARCHAR(100)    NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO organization_types (name) VALUES
+    ('Garage'), ('Concessionnaire'), ('Contrôle technique'), ('Assurance'), ('Autre');
+
+-- =========================================================
+-- Table: organizations
+-- Garages / intervenants ("Mes garages"). `is_mine` désigne
+-- l'entrée "Moi-même" pour les entretiens réalisés soi-même.
+-- =========================================================
+CREATE TABLE organizations (
+    id              CHAR(36)        NOT NULL PRIMARY KEY,
+    name            VARCHAR(150)    NOT NULL,
+    organization_type_id INT UNSIGNED NULL COMMENT 'NULL autorisé si is_mine',
+    phone           VARCHAR(30)     NULL,
+    mobile          VARCHAR(30)     NULL,
+    website         VARCHAR(255)    NULL,
+    address_id      CHAR(36)        NULL,
+    comment         TEXT            NULL,
+    is_archived     TINYINT(1)      NOT NULL DEFAULT 0,
+    is_mine         TINYINT(1)      NOT NULL DEFAULT 0,
+
+    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_organizations_type
+        FOREIGN KEY (organization_type_id) REFERENCES organization_types(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_organizations_address
+        FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================================================
+-- Table: organization_vehicle_categories (N-N)
+-- Catégories de véhicules prises en charge par une organisation
+-- =========================================================
+CREATE TABLE organization_vehicle_categories (
+    organization_id         CHAR(36)        NOT NULL,
+    vehicle_category_id     INT UNSIGNED    NOT NULL,
+
+    PRIMARY KEY (organization_id, vehicle_category_id),
+    CONSTRAINT fk_org_categories_organization
+        FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    CONSTRAINT fk_org_categories_category
+        FOREIGN KEY (vehicle_category_id) REFERENCES vehicle_categories(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =========================================================
 -- Table: maintenances
 -- Historique des interventions réalisées
 -- =========================================================
@@ -69,7 +168,7 @@ CREATE TABLE maintenances (
     mileage               INT UNSIGNED    NULL,
     description           TEXT            NULL,
     cost                  DECIMAL(10,2)   NULL,
-    provider              VARCHAR(150)    NULL COMMENT 'Garage / intervenant',
+    organization_id       CHAR(36)        NOT NULL COMMENT 'Garage / intervenant',
     comment               TEXT            NULL,
 
     created_at            TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -79,6 +178,8 @@ CREATE TABLE maintenances (
         FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE,
     CONSTRAINT fk_maintenances_type
         FOREIGN KEY (maintenance_type_id) REFERENCES maintenance_types(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_maintenances_organization
+        FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE RESTRICT,
 
     INDEX idx_maintenances_vehicle_date (vehicle_id, date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

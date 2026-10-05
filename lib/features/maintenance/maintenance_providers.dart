@@ -1,11 +1,15 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/network/result.dart';
 import '../../core/network/sticky_result_provider.dart';
 import '../../models/maintenance/maintenance.dart';
 import '../../models/maintenance/maintenance_schedule.dart';
 import '../../models/maintenance/maintenance_type.dart';
+import '../../models/organization/organization.dart';
 import '../../models/reminder/reminder.dart';
 import '../../models/vehicle/vehicle.dart';
 import '../../repositories/api_maintenance_repository.dart';
+import '../../repositories/api_organization_repository.dart';
 import '../vehicles/vehicles_providers.dart';
 
 /// Interventions réalisées sur le véhicule, les plus récentes en premier.
@@ -38,6 +42,16 @@ final vehicleSchedulesProvider =
 /// Types d'entretien indexés par identifiant.
 Map<int, MaintenanceType> indexMaintenanceTypes(List<MaintenanceType> types) =>
     {for (final type in types) type.id: type};
+
+/// Organisations indexées par identifiant, pour afficher le garage d'une
+/// intervention. Vide tant que la liste n'est pas chargée (ou en échec) :
+/// l'affichage des interventions n'en dépend pas.
+final organizationByIdProvider = Provider<Map<String, Organization>>((ref) {
+  return switch (ref.watch(organizationsProvider).value) {
+    Success(:final data) => {for (final o in data) o.id: o},
+    _ => const {},
+  };
+});
 
 /// Échéances d'entretien planifiées pour ce véhicule, triées par urgence.
 final vehicleScheduleRemindersProvider =

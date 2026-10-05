@@ -46,7 +46,9 @@ class ApiClient {
         final statusCode = error.response?.statusCode;
         if (statusCode == 404) return const NotFoundFailure();
         return ServerFailure(
-          error.response?.statusMessage ?? 'Erreur serveur.',
+          _errorMessage(error.response?.data) ??
+              error.response?.statusMessage ??
+              'Erreur serveur.',
           statusCode: statusCode,
         );
       case DioExceptionType.cancel:
@@ -56,4 +58,10 @@ class ApiClient {
         return const UnknownFailure();
     }
   }
+
+  /// Message d'erreur du corps de réponse backend (`{ "error": "..." }`).
+  String? _errorMessage(Object? data) => switch (data) {
+    {'error': final String message} when message.isNotEmpty => message,
+    _ => null,
+  };
 }

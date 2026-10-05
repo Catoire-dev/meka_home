@@ -5,6 +5,8 @@ import '../features/home/home_screen.dart';
 import '../features/maintenance/maintenance_detail_screen.dart';
 import '../features/maintenance/maintenance_form_screen.dart';
 import '../features/maintenance/schedule_form_screen.dart';
+import '../features/organizations/organization_form_screen.dart';
+import '../features/organizations/organizations_screen.dart';
 import '../features/vehicles/vehicle_detail_screen.dart';
 import '../features/vehicles/vehicle_form_screen.dart';
 import '../features/vehicles/vehicles_screen.dart';
@@ -31,6 +33,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/vehicles',
                 builder: (context, state) => const VehiclesScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/garages',
+                builder: (context, state) => const OrganizationsScreen(),
               ),
             ],
           ),
@@ -82,6 +92,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           vehicleId: state.pathParameters['id']!,
           scheduleId: state.pathParameters['scheduleId']!,
         ),
+      ),
+      GoRoute(
+        path: '/garages/new',
+        builder: (context, state) => const OrganizationFormScreen(),
+      ),
+      GoRoute(
+        path: '/garages/:id/edit',
+        builder: (context, state) =>
+            OrganizationFormScreen(organizationId: state.pathParameters['id']!),
       ),
     ],
   );

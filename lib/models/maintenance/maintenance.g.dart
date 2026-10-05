@@ -11,10 +11,10 @@ Maintenance _$MaintenanceFromJson(Map<String, dynamic> json) => Maintenance(
   vehicleId: json['vehicle_id'] as String,
   maintenanceTypeId: (json['maintenance_type_id'] as num).toInt(),
   date: DateTime.parse(json['date'] as String),
+  organizationId: json['organization_id'] as String,
   mileage: (json['mileage'] as num?)?.toInt(),
   description: json['description'] as String?,
   cost: parseNullableDouble(json['cost']),
-  provider: json['provider'] as String?,
   comment: json['comment'] as String?,
 );
 
@@ -24,9 +24,9 @@ Map<String, dynamic> _$MaintenanceToJson(Maintenance instance) =>
       'vehicle_id': instance.vehicleId,
       'maintenance_type_id': instance.maintenanceTypeId,
       'date': instance.date.toIso8601String(),
+      'organization_id': instance.organizationId,
       'mileage': instance.mileage,
       'description': instance.description,
       'cost': instance.cost,
-      'provider': instance.provider,
       'comment': instance.comment,
     };

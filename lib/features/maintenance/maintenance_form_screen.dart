@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/errors/failure.dart';
 import '../../core/network/result.dart';
@@ -11,12 +12,16 @@ import '../../models/maintenance/maintenance.dart';
 import '../../models/maintenance/maintenance_schedule.dart';
 import '../../models/maintenance/maintenance_type.dart';
 import '../../models/maintenance/schedule_interval.dart';
+import '../../models/organization/organization.dart';
+import '../../models/vehicle/vehicle_category.dart';
 import '../../repositories/api_maintenance_repository.dart';
+import '../../repositories/api_organization_repository.dart';
 import '../vehicles/vehicles_providers.dart';
 import 'maintenance_actions.dart';
 import 'maintenance_providers.dart';
 import 'widgets/maintenance_type_field.dart';
 import 'widgets/next_schedule_fields.dart';
+import 'widgets/organization_field.dart';
 import 'widgets/schedule_due_controller.dart';
 
 /// Formulaire d'ajout ou de modification d'une intervention. Mode édition
@@ -48,18 +53,20 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
 
   final _mileageController = TextEditingController();
   final _costController = TextEditingController();
-  final _providerController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _commentController = TextEditingController();
   final _nextDue = ScheduleDueController();
 
   int? _typeId;
+  String? _organizationId;
   DateTime _date = DateUtils.dateOnly(DateTime.now());
 
   bool _planNext = false;
   MaintenanceSchedule? _matchingSchedule;
 
   List<MaintenanceType> _types = const [];
+  List<Organization> _organizations = const [];
+  VehicleCategory? _vehicleCategory;
   List<MaintenanceSchedule> _schedules = const [];
   List<Maintenance> _maintenances = const [];
   int? _vehicleMileage;
@@ -79,7 +86,6 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
   void dispose() {
     _mileageController.dispose();
     _costController.dispose();
-    _providerController.dispose();
     _descriptionController.dispose();
     _commentController.dispose();
     _nextDue.dispose();
@@ -103,6 +109,7 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
 
   void _retryLoad() {
     ref.invalidate(maintenanceTypesProvider);
+    ref.invalidate(organizationsProvider);
     ref.invalidate(vehicleByIdProvider(widget.vehicleId));
     ref.invalidate(vehicleSchedulesProvider(widget.vehicleId));
     ref.invalidate(vehicleMaintenancesProvider(widget.vehicleId));
@@ -116,7 +123,9 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
   Future<void> _load() async {
     final vehicleId = widget.vehicleId;
     final types = await _unwrap(ref.read(maintenanceTypesProvider.future));
-    // Le véhicule ne sert qu'à afficher/pré-remplir le kilométrage actuel.
+    final organizations = await _unwrap(ref.read(organizationsProvider.future));
+    // Le véhicule ne sert qu'à pré-remplir le kilométrage actuel et à
+    // filtrer les garages par catégorie.
     final vehicle = await _unwrap(
       ref.read(vehicleByIdProvider(vehicleId).future),
       required: false,
@@ -149,6 +158,8 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
       _loading = false;
       if (_loadError != null) return;
       _types = types!;
+      _organizations = organizations!;
+      _vehicleCategory = vehicle?.category;
       _schedules = schedules ?? const [];
       _maintenances = maintenances ?? const [];
       _vehicleMileage = vehicle?.mileage;
@@ -156,11 +167,11 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
       if (existing != null) {
         _existing = existing;
         _typeId = existing.maintenanceTypeId;
+        _organizationId = existing.organizationId;
         _date = existing.date;
         _mileageController.text = existing.mileage?.toString() ?? '';
         _costController.text =
             existing.cost?.toStringAsFixed(2).replaceAll('.', ',') ?? '';
-        _providerController.text = existing.provider ?? '';
         _descriptionController.text = existing.description ?? '';
         _commentController.text = existing.comment ?? '';
       } else {
@@ -193,6 +204,32 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
     );
   }
 
+  /// Garages proposés : non archivés et prenant en charge la catégorie du
+  /// véhicule, plus celui déjà sélectionné (même archivé) en modification.
+  List<Organization> get _availableOrganizations => [
+    for (final organization in _organizations)
+      if (organization.id == _organizationId ||
+          (!organization.isArchived &&
+              (_vehicleCategory == null ||
+                  organization.handles(_vehicleCategory!))))
+        organization,
+  ];
+
+  /// Ouvre la création d'un garage puis le sélectionne au retour.
+  Future<void> _createOrganization() async {
+    final created = await context.push<Organization>('/garages/new');
+    if (created == null || !mounted) return;
+    final organizations = await _unwrap(
+      ref.read(organizationsProvider.future),
+      required: false,
+    );
+    if (!mounted) return;
+    setState(() {
+      _organizations = organizations ?? [..._organizations, created];
+      _organizationId = created.id;
+    });
+  }
+
   String? _nullIfEmpty(String value) =>
       value.trim().isEmpty ? null : value.trim();
 
@@ -222,10 +259,10 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
       vehicleId: widget.vehicleId,
       maintenanceTypeId: _typeId!,
       date: _date,
+      organizationId: _organizationId!,
       mileage: parseUserInt(_mileageController.text),
       description: _nullIfEmpty(_descriptionController.text),
       cost: parseUserDouble(_costController.text),
-      provider: _nullIfEmpty(_providerController.text),
       comment: _nullIfEmpty(_commentController.text),
     );
 
@@ -338,11 +375,11 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          TextFormField(
-            controller: _providerController,
-            decoration: const InputDecoration(
-              labelText: 'Garage / intervenant',
-            ),
+          OrganizationField(
+            organizations: _availableOrganizations,
+            value: _organizationId,
+            onChanged: (value) => setState(() => _organizationId = value),
+            onCreate: _createOrganization,
           ),
           const SizedBox(height: 12),
           TextFormField(

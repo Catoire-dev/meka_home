@@ -32,6 +32,9 @@ class Vehicle {
 
   final String id;
   final String customName;
+
+  /// Reçue en objet, envoyée par identifiant (`vehicle_category_id`).
+  @JsonKey(includeToJson: false)
   final VehicleCategory category;
   final VehicleStatus status;
 
@@ -57,7 +60,10 @@ class Vehicle {
   factory Vehicle.fromJson(Map<String, dynamic> json) =>
       _$VehicleFromJson(json);
 
-  Map<String, dynamic> toJson() => _$VehicleToJson(this);
+  Map<String, dynamic> toJson() => {
+    ..._$VehicleToJson(this),
+    'vehicle_category_id': category.id,
+  };
 
   Vehicle copyWith({
     String? customName,

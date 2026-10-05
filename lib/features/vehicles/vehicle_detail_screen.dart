@@ -14,7 +14,6 @@ import '../../core/widgets/vehicle_placeholder.dart';
 import '../../models/document/document.dart';
 import '../../models/document/document_type.dart';
 import '../../models/vehicle/vehicle.dart';
-import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_energy.dart';
 import '../../models/vehicle/vehicle_status.dart';
 import '../../repositories/api_maintenance_repository.dart';
@@ -154,7 +153,7 @@ class _HeaderCard extends ConsumerWidget {
                   Wrap(
                     spacing: 8,
                     children: [
-                      Chip(label: Text(vehicle.category.label)),
+                      Chip(label: Text(vehicle.category.name)),
                       Chip(label: Text(vehicle.status.label)),
                     ],
                   ),

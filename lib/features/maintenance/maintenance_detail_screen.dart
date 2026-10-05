@@ -74,6 +74,10 @@ class MaintenanceDetailScreen extends ConsumerWidget {
       _ => null,
     };
 
+    final organization = ref.watch(
+      organizationByIdProvider,
+    )[maintenance?.organizationId];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(type?.label ?? 'Intervention'),
@@ -98,17 +102,26 @@ class MaintenanceDetailScreen extends ConsumerWidget {
         value: maintenancesAsync,
         builder: (_) => maintenance == null
             ? const Center(child: Text('Intervention introuvable.'))
-            : _MaintenanceDetailBody(maintenance: maintenance, type: type),
+            : _MaintenanceDetailBody(
+                maintenance: maintenance,
+                type: type,
+                organizationName: organization?.name,
+              ),
       ),
     );
   }
 }
 
 class _MaintenanceDetailBody extends ConsumerWidget {
-  const _MaintenanceDetailBody({required this.maintenance, this.type});
+  const _MaintenanceDetailBody({
+    required this.maintenance,
+    this.type,
+    this.organizationName,
+  });
 
   final Maintenance maintenance;
   final MaintenanceType? type;
+  final String? organizationName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -137,11 +150,10 @@ class _MaintenanceDetailBody extends ConsumerWidget {
                   ),
                 if (maintenance.cost != null)
                   InfoRow(label: 'Coût', value: formatEuros(maintenance.cost!)),
-                if (maintenance.provider != null)
-                  InfoRow(
-                    label: 'Garage / intervenant',
-                    value: maintenance.provider!,
-                  ),
+                InfoRow(
+                  label: 'Garage / intervenant',
+                  value: organizationName ?? '—',
+                ),
                 if (maintenance.description != null) ...[
                   const SizedBox(height: 12),
                   Text('Description', style: theme.textTheme.labelLarge),

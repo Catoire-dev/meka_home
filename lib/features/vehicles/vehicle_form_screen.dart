@@ -40,26 +40,45 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
   final _mileageController = TextEditingController(text: '0');
   final _commentController = TextEditingController();
 
-  VehicleCategory _category = VehicleCategory.voiture;
+  List<VehicleCategory> _availableCategories = const [];
+  int? _categoryId;
   VehicleStatus _status = VehicleStatus.current;
   VehicleEnergy? _energy;
   DateTime? _firstRegistrationDate;
 
   Vehicle? _existing;
-  bool _loading = false;
+  bool _loading = true;
   bool _saving = false;
   String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isEditing) {
-      _loading = true;
-      _loadVehicle();
-    }
+    _load();
   }
 
-  Future<void> _loadVehicle() async {
+  Future<void> _load() async {
+    final categoriesResult = await ref.read(vehicleCategoriesProvider.future);
+    if (!mounted) return;
+    switch (categoriesResult) {
+      case Success(:final data):
+        _availableCategories = data;
+        _categoryId = data
+            .where((category) => category.isDefault)
+            .firstOrNull
+            ?.id;
+      case FailureResult(:final failure):
+        setState(() {
+          _loadError = failure.message;
+          _loading = false;
+        });
+        return;
+    }
+    if (!widget.isEditing) {
+      setState(() => _loading = false);
+      return;
+    }
+
     final result = await ref
         .read(vehicleRepositoryProvider)
         .getVehicle(widget.vehicleId!);
@@ -80,7 +99,7 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
         _commentController.text = data.comment ?? '';
         setState(() {
           _existing = data;
-          _category = data.category;
+          _categoryId = data.category.id;
           _status = data.status;
           _energy = data.energy;
           _firstRegistrationDate = data.firstRegistrationDate;
@@ -118,13 +137,21 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_categoryId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choisissez une catégorie.')),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
 
     final vehicle = Vehicle(
       id: _existing?.id ?? '',
       customName: _customNameController.text.trim(),
-      category: _category,
+      category: _availableCategories.firstWhere(
+        (category) => category.id == _categoryId,
+      ),
       status: _status,
       brand: _brandController.text.trim(),
       model: _modelController.text.trim(),
@@ -194,14 +221,17 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
                 (value == null || value.trim().isEmpty) ? 'Requis' : null,
           ),
           const SizedBox(height: 16),
-          SegmentedButton<VehicleCategory>(
+          Text('Catégorie', style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 8),
+          SegmentedButton<int>(
             segments: [
-              for (final category in VehicleCategory.values)
-                ButtonSegment(value: category, label: Text(category.label)),
+              for (final category in _availableCategories)
+                ButtonSegment(value: category.id, label: Text(category.name)),
             ],
-            selected: {_category},
+            selected: {?_categoryId},
+            emptySelectionAllowed: _categoryId == null,
             onSelectionChanged: (value) =>
-                setState(() => _category = value.first),
+                setState(() => _categoryId = value.firstOrNull),
           ),
           const SizedBox(height: 16),
           SegmentedButton<VehicleStatus>(

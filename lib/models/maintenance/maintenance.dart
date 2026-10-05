@@ -12,10 +12,10 @@ class Maintenance {
     required this.vehicleId,
     required this.maintenanceTypeId,
     required this.date,
+    required this.organizationId,
     this.mileage,
     this.description,
     this.cost,
-    this.provider,
     this.comment,
   });
 
@@ -24,13 +24,15 @@ class Maintenance {
   final int maintenanceTypeId;
 
   final DateTime date;
+
+  /// Garage / intervenant (obligatoire).
+  final String organizationId;
   final int? mileage;
   final String? description;
 
   @JsonKey(fromJson: parseNullableDouble)
   final double? cost;
 
-  final String? provider;
   final String? comment;
 
   factory Maintenance.fromJson(Map<String, dynamic> json) =>
@@ -41,10 +43,10 @@ class Maintenance {
   Maintenance copyWith({
     int? maintenanceTypeId,
     DateTime? date,
+    String? organizationId,
     int? mileage,
     String? description,
     double? cost,
-    String? provider,
     String? comment,
   }) {
     return Maintenance(
@@ -52,10 +54,10 @@ class Maintenance {
       vehicleId: vehicleId,
       maintenanceTypeId: maintenanceTypeId ?? this.maintenanceTypeId,
       date: date ?? this.date,
+      organizationId: organizationId ?? this.organizationId,
       mileage: mileage ?? this.mileage,
       description: description ?? this.description,
       cost: cost ?? this.cost,
-      provider: provider ?? this.provider,
       comment: comment ?? this.comment,
     );
   }

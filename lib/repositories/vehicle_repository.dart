@@ -1,8 +1,11 @@
 import '../core/network/result.dart';
 import '../models/vehicle/vehicle.dart';
+import '../models/vehicle/vehicle_category.dart';
 
 /// Contrat d'accès aux véhicules, indépendant du backend qui l'implémente.
 abstract interface class VehicleRepository {
+  Future<Result<List<VehicleCategory>>> getVehicleCategories();
+
   Future<Result<List<Vehicle>>> getVehicles();
   Future<Result<Vehicle>> getVehicle(String id);
   Future<Result<Vehicle>> createVehicle(Vehicle vehicle);

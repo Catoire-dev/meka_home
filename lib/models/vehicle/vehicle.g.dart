@@ -9,7 +9,7 @@ part of 'vehicle.dart';
 Vehicle _$VehicleFromJson(Map<String, dynamic> json) => Vehicle(
   id: json['id'] as String,
   customName: json['custom_name'] as String,
-  category: $enumDecode(_$VehicleCategoryEnumMap, json['category']),
+  category: VehicleCategory.fromJson(json['category'] as Map<String, dynamic>),
   status: $enumDecode(_$VehicleStatusEnumMap, json['status']),
   brand: json['brand'] as String,
   model: json['model'] as String,
@@ -31,7 +31,6 @@ Vehicle _$VehicleFromJson(Map<String, dynamic> json) => Vehicle(
 Map<String, dynamic> _$VehicleToJson(Vehicle instance) => <String, dynamic>{
   'id': instance.id,
   'custom_name': instance.customName,
-  'category': _$VehicleCategoryEnumMap[instance.category]!,
   'status': _$VehicleStatusEnumMap[instance.status]!,
   'brand': instance.brand,
   'model': instance.model,
@@ -46,12 +45,6 @@ Map<String, dynamic> _$VehicleToJson(Vehicle instance) => <String, dynamic>{
   'mileage': instance.mileage,
   'comment': instance.comment,
   'photo_filename': instance.photoFilename,
-};
-
-const _$VehicleCategoryEnumMap = {
-  VehicleCategory.moto: 'moto',
-  VehicleCategory.voiture: 'voiture',
-  VehicleCategory.autre: 'autre',
 };
 
 const _$VehicleStatusEnumMap = {

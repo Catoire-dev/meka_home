@@ -29,15 +29,19 @@ class MaintenanceApiService {
   }
 
   Future<Map<String, dynamic>> updateMaintenance(
+    String vehicleId,
     String id,
     Map<String, dynamic> body,
   ) async {
-    final response = await _client.dio.put('/maintenances/$id', data: body);
+    final response = await _client.dio.put(
+      '/vehicles/$vehicleId/maintenances/$id',
+      data: body,
+    );
     return response.data as Map<String, dynamic>;
   }
 
-  Future<void> deleteMaintenance(String id) async {
-    await _client.dio.delete('/maintenances/$id');
+  Future<void> deleteMaintenance(String vehicleId, String id) async {
+    await _client.dio.delete('/vehicles/$vehicleId/maintenances/$id');
   }
 
   Future<List<dynamic>> fetchMaintenanceSchedules(String vehicleId) async {
@@ -59,17 +63,18 @@ class MaintenanceApiService {
   }
 
   Future<Map<String, dynamic>> updateMaintenanceSchedule(
+    String vehicleId,
     String id,
     Map<String, dynamic> body,
   ) async {
     final response = await _client.dio.put(
-      '/maintenance-schedules/$id',
+      '/vehicles/$vehicleId/maintenance-schedules/$id',
       data: body,
     );
     return response.data as Map<String, dynamic>;
   }
 
-  Future<void> deleteMaintenanceSchedule(String id) async {
-    await _client.dio.delete('/maintenance-schedules/$id');
+  Future<void> deleteMaintenanceSchedule(String vehicleId, String id) async {
+    await _client.dio.delete('/vehicles/$vehicleId/maintenance-schedules/$id');
   }
 }

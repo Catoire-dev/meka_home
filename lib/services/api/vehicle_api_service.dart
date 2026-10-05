@@ -14,6 +14,11 @@ class VehicleApiService {
     return response.data as List<dynamic>;
   }
 
+  Future<List<dynamic>> fetchVehicleCategories() async {
+    final response = await _client.dio.get('/vehicle-categories');
+    return response.data as List<dynamic>;
+  }
+
   Future<Map<String, dynamic>> fetchVehicle(String id) async {
     final response = await _client.dio.get('/vehicles/$id');
     return response.data as Map<String, dynamic>;
