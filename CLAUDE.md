@@ -122,6 +122,8 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 
 ## Evolution
 - scanner une carte grise
+- suggest address
+- suggest magasin
 - recuperer les plan d'entretien constructeur
 - liste de marque
 - liste de modele par marque
