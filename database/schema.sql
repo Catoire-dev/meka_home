@@ -39,6 +39,7 @@ CREATE TABLE vehicles (
     mileage                     INT UNSIGNED    NOT NULL DEFAULT 0,
     comment                     TEXT            NULL,
     photo_filename               VARCHAR(255)    NULL,
+    is_favorite                 TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Affiché sur l''accueil',
 
     created_at                  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at                  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

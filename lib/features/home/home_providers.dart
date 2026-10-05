@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/network/result.dart';
 import '../../core/network/sticky_result_provider.dart';
 import '../../models/maintenance/maintenance_type.dart';
@@ -22,7 +24,7 @@ final currentVehiclesProvider = stickyResultProvider<List<Vehicle>>((
   };
 });
 
-/// Prochaines échéances d'entretien, toutes véhicules actuels confondus,
+/// Prochaines échéances d'entretien, tous véhicules actuels confondus,
 /// triées par urgence puis par proximité de la date/du kilométrage.
 final upcomingRemindersProvider = stickyResultProvider<List<Reminder>>((
   ref,
@@ -64,4 +66,39 @@ final upcomingRemindersProvider = stickyResultProvider<List<Reminder>>((
 
   reminders.sort(Reminder.compareByUrgency);
   return Result.success(reminders);
+});
+
+/// Véhicules affichés sur l'accueil : en cours et mis en favori.
+final favoriteVehiclesProvider = Provider<AsyncValue<Result<List<Vehicle>>>>(
+  (ref) => ref
+      .watch(currentVehiclesProvider)
+      .whenData(
+        (result) => switch (result) {
+          Success(:final data) => Result.success(
+            data.where((v) => v.isFavorite).toList(),
+          ),
+          FailureResult(:final failure) => Result.failure(failure),
+        },
+      ),
+);
+
+/// Échéances de l'accueil : sous-ensemble d'[upcomingRemindersProvider]
+/// limité aux véhicules favoris, dans le même ordre d'urgence.
+final favoriteRemindersProvider = Provider<AsyncValue<Result<List<Reminder>>>>((
+  ref,
+) {
+  final favoriteIds = switch (ref.watch(favoriteVehiclesProvider).value) {
+    Success(:final data) => {for (final v in data) v.id},
+    _ => const <String>{},
+  };
+  return ref
+      .watch(upcomingRemindersProvider)
+      .whenData(
+        (result) => switch (result) {
+          Success(:final data) => Result.success(
+            data.where((r) => favoriteIds.contains(r.vehicleId)).toList(),
+          ),
+          FailureResult(:final failure) => Result.failure(failure),
+        },
+      );
 });

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/home/home_screen.dart';
+import '../features/home/upcoming_reminders_screen.dart';
 import '../features/maintenance/maintenance_detail_screen.dart';
 import '../features/maintenance/maintenance_form_screen.dart';
 import '../features/maintenance/schedule_form_screen.dart';
@@ -46,6 +47,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/reminders',
+        builder: (context, state) => const UpcomingRemindersScreen(),
       ),
       GoRoute(
         path: '/vehicles/new',

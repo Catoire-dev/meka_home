@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 
+import '../../core/utils/json_parsing.dart';
 import 'vehicle_category.dart';
 import 'vehicle_energy.dart';
 import 'vehicle_status.dart';
@@ -28,6 +29,7 @@ class Vehicle {
     this.mileage = 0,
     this.comment,
     this.photoFilename,
+    this.isFavorite = false,
   });
 
   final String id;
@@ -53,6 +55,10 @@ class Vehicle {
   final int mileage;
   final String? comment;
   final String? photoFilename;
+
+  /// Véhicule épinglé sur l'accueil (avec ses échéances).
+  @JsonKey(fromJson: parseBool, toJson: boolToInt)
+  final bool isFavorite;
 
   bool get isCurrent => status == VehicleStatus.current;
   bool get isHistorical => status == VehicleStatus.historical;
@@ -82,6 +88,7 @@ class Vehicle {
     int? mileage,
     String? comment,
     String? photoFilename,
+    bool? isFavorite,
   }) {
     return Vehicle(
       id: id,
@@ -102,6 +109,7 @@ class Vehicle {
       mileage: mileage ?? this.mileage,
       comment: comment ?? this.comment,
       photoFilename: photoFilename ?? this.photoFilename,
+      isFavorite: isFavorite ?? this.isFavorite,
     );
   }
 }

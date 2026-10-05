@@ -7,18 +7,21 @@ import '../media/image_url_resolver.dart';
 import 'vehicle_placeholder.dart';
 
 /// Carte résumant un véhicule : photo, identité, kilométrage, commentaire
-/// et prochaine échéance d'entretien le cas échéant.
+/// et prochaine échéance d'entretien le cas échéant. [trailing] s'affiche
+/// à droite (ex. bouton favori).
 class VehicleSummaryCard extends ConsumerWidget {
   const VehicleSummaryCard({
     super.key,
     required this.vehicle,
     this.nextReminder,
     this.onTap,
+    this.trailing,
   });
 
   final Vehicle vehicle;
   final Reminder? nextReminder;
   final VoidCallback? onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -117,6 +120,7 @@ class VehicleSummaryCard extends ConsumerWidget {
                   ],
                 ),
               ),
+              ?trailing,
             ],
           ),
         ),

@@ -26,6 +26,7 @@ void main() {
         'mileage': 98000,
         'comment': null,
         'photo_filename': null,
+        'is_favorite': 1,
       };
 
       final vehicle = Vehicle.fromJson(json);
@@ -37,12 +38,14 @@ void main() {
       expect(vehicle.powerHp, 65);
       expect(vehicle.weightKg, 850);
       expect(vehicle.isCurrent, isTrue);
+      expect(vehicle.isFavorite, isTrue);
 
       final out = vehicle.toJson();
       expect(out['vehicle_category_id'], 2);
       expect(out.containsKey('category'), isFalse);
       expect(out['custom_name'], 'La Twingo');
       expect(out['mileage'], 98000);
+      expect(out['is_favorite'], 1);
     },
   );
 }

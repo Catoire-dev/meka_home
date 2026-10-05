@@ -21,6 +21,7 @@ import '../maintenance/maintenance_providers.dart';
 import '../maintenance/widgets/vehicle_maintenance_section.dart';
 import 'vehicle_detail_providers.dart';
 import 'vehicles_providers.dart';
+import 'widgets/vehicle_favorite_button.dart';
 
 class VehicleDetailScreen extends ConsumerWidget {
   const VehicleDetailScreen({super.key, required this.vehicleId});
@@ -142,7 +143,17 @@ class _HeaderCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(vehicle.customName, style: theme.textTheme.titleLarge),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          vehicle.customName,
+                          style: theme.textTheme.titleLarge,
+                        ),
+                      ),
+                      VehicleFavoriteButton(vehicle: vehicle),
+                    ],
+                  ),
                   Text(
                     '${vehicle.brand} ${vehicle.model}',
                     style: theme.textTheme.bodyMedium?.copyWith(

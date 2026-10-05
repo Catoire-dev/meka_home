@@ -26,6 +26,9 @@ Vehicle _$VehicleFromJson(Map<String, dynamic> json) => Vehicle(
   mileage: (json['mileage'] as num?)?.toInt() ?? 0,
   comment: json['comment'] as String?,
   photoFilename: json['photo_filename'] as String?,
+  isFavorite: json['is_favorite'] == null
+      ? false
+      : parseBool(json['is_favorite']),
 );
 
 Map<String, dynamic> _$VehicleToJson(Vehicle instance) => <String, dynamic>{
@@ -45,6 +48,7 @@ Map<String, dynamic> _$VehicleToJson(Vehicle instance) => <String, dynamic>{
   'mileage': instance.mileage,
   'comment': instance.comment,
   'photo_filename': instance.photoFilename,
+  'is_favorite': boolToInt(instance.isFavorite),
 };
 
 const _$VehicleStatusEnumMap = {

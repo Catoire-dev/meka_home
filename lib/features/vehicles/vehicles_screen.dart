@@ -12,6 +12,7 @@ import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_status.dart';
 import '../../repositories/api_vehicle_repository.dart';
 import 'vehicles_providers.dart';
+import 'widgets/vehicle_favorite_button.dart';
 
 class VehiclesScreen extends ConsumerWidget {
   const VehiclesScreen({super.key});
@@ -246,6 +247,7 @@ class _VehiclesList extends StatelessWidget {
         return VehicleSummaryCard(
           vehicle: vehicle,
           onTap: () => context.push('/vehicles/${vehicle.id}'),
+          trailing: VehicleFavoriteButton(vehicle: vehicle),
         );
       },
     );

@@ -9,8 +9,7 @@ import '../../models/vehicle/vehicle_category.dart';
 import '../../models/vehicle/vehicle_energy.dart';
 import '../../models/vehicle/vehicle_status.dart';
 import '../../repositories/api_vehicle_repository.dart';
-import '../home/home_providers.dart';
-import 'vehicles_providers.dart';
+import 'vehicle_actions.dart';
 
 /// Formulaire d'ajout ou de modification d'un véhicule. Mode édition si
 /// [vehicleId] est fourni, sinon création.
@@ -166,24 +165,16 @@ class _VehicleFormScreenState extends ConsumerState<VehicleFormScreen> {
       mileage: int.tryParse(_mileageController.text.trim()) ?? 0,
       comment: _nullIfEmpty(_commentController.text),
       photoFilename: _existing?.photoFilename,
+      isFavorite: _existing?.isFavorite ?? false,
     );
 
-    final repository = ref.read(vehicleRepositoryProvider);
-    final result = widget.isEditing
-        ? await repository.updateVehicle(vehicle)
-        : await repository.createVehicle(vehicle);
+    final result = await ref.read(vehicleActionsProvider).save(vehicle);
 
     if (!mounted) return;
     setState(() => _saving = false);
 
     switch (result) {
       case Success():
-        ref.invalidate(allVehiclesProvider);
-        ref.invalidate(currentVehiclesProvider);
-        ref.invalidate(upcomingRemindersProvider);
-        if (widget.isEditing) {
-          ref.invalidate(vehicleByIdProvider(vehicle.id));
-        }
         Navigator.of(context).pop();
       case FailureResult(:final failure):
         ScaffoldMessenger.of(
