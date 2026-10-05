@@ -24,7 +24,12 @@ Future<void> setOrganizationArchived(
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(switch (result) {
+      // Un SnackBar avec action persiste par défaut dans les versions
+      // récentes de Flutter : on force sa disparition après `duration`.
       Success() => SnackBar(
+        persist: false,
+        duration: const Duration(seconds: 5),
+        showCloseIcon: true,
         content: Text(
           '« ${organization.name} » ${archived ? 'archivé' : 'désarchivé'}.',
         ),
