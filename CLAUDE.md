@@ -120,4 +120,11 @@ Si une fonctionnalité nécessite une route non listée ici : la proposer (méth
 - [ ] Étape 10 — Notifications / rappels (pas de push natif dans un premier temps)
 - [ ] Étape 11 — Polissage responsive et UX
 
+## Evolution
+- scanner une carte grise
+- recuperer les plan d'entretien constructeur
+- liste de marque
+- liste de modele par marque
+
+
 Prochaine étape à la reprise : **Étape 9 — Documents**.
