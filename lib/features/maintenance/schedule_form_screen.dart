@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/errors/failure.dart';
 import '../../core/network/result.dart';
+import '../../core/utils/date_math.dart';
 import '../../core/widgets/confirm_dialog.dart';
 import '../../core/widgets/error_retry_view.dart';
 import '../../core/widgets/form_submit_button.dart';
 import '../../models/maintenance/maintenance_schedule.dart';
 import '../../models/maintenance/maintenance_type.dart';
+import '../../models/maintenance/schedule_interval.dart';
 import '../../repositories/api_maintenance_repository.dart';
 import '../vehicles/vehicles_providers.dart';
 import 'maintenance_actions.dart';
@@ -49,6 +51,35 @@ class _ScheduleFormScreenState extends ConsumerState<ScheduleFormScreen> {
   bool _loading = true;
   bool _saving = false;
   Failure? _loadError;
+
+  /// Échéance modifiée dont au moins une valeur a été saisie en relatif.
+  bool get _keepsStoredInterval =>
+      _existing?.intervalMonths != null || _existing?.intervalMileage != null;
+
+  /// Référence des valeurs « dans » : en modification d'une échéance saisie
+  /// en relatif, la date / le kilométrage de sa planification (déduits de
+  /// l'intervalle conservé), pour que l'échéance reste inchangée ;
+  /// sinon aujourd'hui et le kilométrage actuel.
+  DateTime get _referenceDate {
+    final existing = _existing;
+    final today = DateUtils.dateOnly(DateTime.now());
+    if (existing?.dueDate case final dueDate?) {
+      if (existing!.intervalMonths case final months?) {
+        return addMonths(dueDate, -months);
+      }
+    }
+    return today;
+  }
+
+  int? get _referenceMileage {
+    final existing = _existing;
+    if (existing?.dueMileage case final dueMileage?) {
+      if (existing!.intervalMileage case final mileage?) {
+        return dueMileage - mileage;
+      }
+    }
+    return _vehicleMileage;
+  }
 
   @override
   void initState() {
@@ -118,7 +149,16 @@ class _ScheduleFormScreenState extends ConsumerState<ScheduleFormScreen> {
       if (existing != null) {
         _existing = existing;
         _typeId = existing.maintenanceTypeId;
-        _due.reset(dueDate: existing.dueDate, dueMileage: existing.dueMileage);
+        _due.reset(
+          dueDate: existing.dueDate,
+          dueMileage: existing.dueMileage,
+          interval: ScheduleInterval(
+            months: existing.dueDate != null ? existing.intervalMonths : null,
+            mileage: existing.dueMileage != null
+                ? existing.intervalMileage
+                : null,
+          ),
+        );
         _commentController.text = existing.comment ?? '';
       }
     });
@@ -129,14 +169,35 @@ class _ScheduleFormScreenState extends ConsumerState<ScheduleFormScreen> {
     setState(() => _saving = true);
 
     final comment = _commentController.text.trim();
+    final interval = _due.relativeInterval;
+    final existing = _existing;
+    // Un intervalle relatif inchangé conserve l'échéance d'origine (évite
+    // un décalage d'arrondi en fin de mois).
+    final dueDate =
+        existing != null &&
+            interval.months != null &&
+            interval.months == existing.intervalMonths
+        ? existing.dueDate
+        : _due.resolveDueDate(_referenceDate);
+    final dueMileage = _due.resolveDueMileage(_referenceMileage);
     final schedule = MaintenanceSchedule(
       id: _existing?.id ?? '',
       vehicleId: widget.vehicleId,
       maintenanceTypeId: _typeId!,
-      dueDate: _due.resolveDueDate(DateUtils.dateOnly(DateTime.now())),
-      dueMileage: _due.resolveDueMileage(_vehicleMileage),
-      lastMaintenanceId: _existing?.lastMaintenanceId,
+      dueDate: dueDate,
+      dueMileage: dueMileage,
+      lastMaintenanceId: existing?.lastMaintenanceId,
       comment: comment.isEmpty ? null : comment,
+      intervalMonths:
+          interval.months ??
+          (existing != null && dueDate == existing.dueDate
+              ? existing.intervalMonths
+              : null),
+      intervalMileage:
+          interval.mileage ??
+          (existing != null && dueMileage == existing.dueMileage
+              ? existing.intervalMileage
+              : null),
     );
 
     final result = await ref
@@ -221,9 +282,11 @@ class _ScheduleFormScreenState extends ConsumerState<ScheduleFormScreen> {
           const SizedBox(height: 12),
           ScheduleDueFields(
             controller: _due,
-            referenceDate: DateUtils.dateOnly(DateTime.now()),
-            referenceMileage: _vehicleMileage,
-            referenceLabel: "aujourd'hui",
+            referenceDate: _referenceDate,
+            referenceMileage: _referenceMileage,
+            referenceLabel: _keepsStoredInterval
+                ? 'la planification'
+                : "aujourd'hui",
           ),
           const SizedBox(height: 12),
           TextFormField(

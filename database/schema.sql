@@ -198,6 +198,8 @@ CREATE TABLE maintenance_schedules (
     due_mileage            INT UNSIGNED    NULL,
     last_maintenance_id    CHAR(36)        NULL COMMENT 'Référence à la dernière intervention de ce type',
     comment                TEXT            NULL,
+    interval_months        INT UNSIGNED    NULL COMMENT 'Intervalle saisi en mode « dans », repris à la replanification',
+    interval_mileage       INT UNSIGNED    NULL COMMENT 'Intervalle saisi en mode « dans », repris à la replanification',
 
     created_at             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at             TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

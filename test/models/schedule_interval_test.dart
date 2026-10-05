@@ -15,15 +15,20 @@ void main() {
         mileage: mileage,
       );
 
-  MaintenanceSchedule schedule({String? lastMaintenanceId}) =>
-      MaintenanceSchedule(
-        id: 's1',
-        vehicleId: 'v1',
-        maintenanceTypeId: 1,
-        dueDate: DateTime(2027, 3, 10),
-        dueMileage: 48000,
-        lastMaintenanceId: lastMaintenanceId,
-      );
+  MaintenanceSchedule schedule({
+    String? lastMaintenanceId,
+    int? intervalMonths,
+    int? intervalMileage,
+  }) => MaintenanceSchedule(
+    id: 's1',
+    vehicleId: 'v1',
+    maintenanceTypeId: 1,
+    dueDate: DateTime(2027, 3, 10),
+    dueMileage: 48000,
+    lastMaintenanceId: lastMaintenanceId,
+    intervalMonths: intervalMonths,
+    intervalMileage: intervalMileage,
+  );
 
   test('monthsBetween arrondit au mois le plus proche', () {
     expect(monthsBetween(DateTime(2026, 3, 10), DateTime(2027, 3, 10)), 12);
@@ -48,6 +53,24 @@ void main() {
     ]);
     expect(interval.mileage, 3000);
     expect(interval.months, 6);
+  });
+
+  test("privilégie l'intervalle conservé sur l'échéance", () {
+    final interval = ScheduleInterval.ofSchedule(
+      schedule(intervalMonths: 24, intervalMileage: 10000),
+      const [],
+    );
+    expect(interval.mileage, 10000);
+    expect(interval.months, 24);
+  });
+
+  test("complète l'intervalle conservé par celui calculé", () {
+    final interval = ScheduleInterval.ofSchedule(
+      schedule(lastMaintenanceId: 'm1', intervalMonths: 24),
+      [maintenance('m1', DateTime(2026, 3, 10), 42000)],
+    );
+    expect(interval.mileage, 6000);
+    expect(interval.months, 24);
   });
 
   test('vide sans intervention de référence', () {

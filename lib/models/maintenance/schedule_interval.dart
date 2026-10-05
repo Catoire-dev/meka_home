@@ -34,10 +34,27 @@ class ScheduleInterval {
     );
   }
 
-  /// Intervalle de l'échéance [schedule], calculé depuis l'intervention qui
-  /// l'a planifiée (`lastMaintenanceId`) ou, à défaut, depuis la plus
-  /// récente intervention du même type. Vide si aucune n'est connue.
+  /// Intervalle de l'échéance [schedule] : celui saisi à sa planification
+  /// s'il a été conservé, sinon calculé depuis l'intervention qui l'a
+  /// planifiée (`lastMaintenanceId`) ou, à défaut, depuis la plus récente
+  /// intervention du même type. Vide si rien ne permet de le déduire.
   factory ScheduleInterval.ofSchedule(
+    MaintenanceSchedule schedule,
+    List<Maintenance> maintenances,
+  ) {
+    final stored = ScheduleInterval(
+      mileage: schedule.intervalMileage,
+      months: schedule.intervalMonths,
+    );
+    if (stored.mileage != null && stored.months != null) return stored;
+    final derived = ScheduleInterval._derived(schedule, maintenances);
+    return ScheduleInterval(
+      mileage: stored.mileage ?? derived.mileage,
+      months: stored.months ?? derived.months,
+    );
+  }
+
+  factory ScheduleInterval._derived(
     MaintenanceSchedule schedule,
     List<Maintenance> maintenances,
   ) {

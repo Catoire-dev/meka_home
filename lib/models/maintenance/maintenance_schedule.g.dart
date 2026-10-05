@@ -17,6 +17,8 @@ MaintenanceSchedule _$MaintenanceScheduleFromJson(Map<String, dynamic> json) =>
       dueMileage: (json['due_mileage'] as num?)?.toInt(),
       lastMaintenanceId: json['last_maintenance_id'] as String?,
       comment: json['comment'] as String?,
+      intervalMonths: (json['interval_months'] as num?)?.toInt(),
+      intervalMileage: (json['interval_mileage'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$MaintenanceScheduleToJson(
@@ -29,4 +31,6 @@ Map<String, dynamic> _$MaintenanceScheduleToJson(
   'due_mileage': instance.dueMileage,
   'last_maintenance_id': instance.lastMaintenanceId,
   'comment': instance.comment,
+  'interval_months': instance.intervalMonths,
+  'interval_mileage': instance.intervalMileage,
 };

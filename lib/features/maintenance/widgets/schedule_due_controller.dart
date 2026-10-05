@@ -57,36 +57,41 @@ class ScheduleDueController extends ChangeNotifier {
         DueInputMode.absolute => _absoluteDate != null,
       };
 
-  /// Réinitialise la saisie. Les valeurs existantes éventuelles sont
-  /// reprises en mode fixe, pour être conservées telles quelles.
-  void reset({DateTime? dueDate, int? dueMileage}) {
+  /// Réinitialise la saisie. Chaque dimension présente dans [interval] est
+  /// reprise en mode relatif (une durée multiple de 12 mois est exprimée en
+  /// années) ; à défaut, la valeur existante éventuelle ([dueDate],
+  /// [dueMileage]) est reprise en mode fixe, pour être conservée telle
+  /// quelle.
+  void reset({
+    DateTime? dueDate,
+    int? dueMileage,
+    ScheduleInterval interval = const ScheduleInterval(),
+  }) {
     durationController.clear();
     _unit = ScheduleIntervalUnit.months;
-    _absoluteDate = dueDate;
-    _dateMode = dueDate != null ? DueInputMode.absolute : DueInputMode.relative;
-    _mileageMode = dueMileage != null
-        ? DueInputMode.absolute
-        : DueInputMode.relative;
-    mileageController.text = dueMileage?.toString() ?? '';
-    notifyListeners();
-  }
-
-  /// Réinitialise la saisie en mode relatif, pré-remplie avec [interval]
-  /// (ex. l'intervalle de l'échéance précédente). Une durée multiple de 12
-  /// mois est exprimée en années.
-  void prefill(ScheduleInterval interval) {
-    reset();
+    _absoluteDate = null;
+    _dateMode = DueInputMode.relative;
     if (interval.months case final months?) {
       final inYears = months % 12 == 0;
       _unit = inYears
           ? ScheduleIntervalUnit.years
           : ScheduleIntervalUnit.months;
       durationController.text = '${inYears ? months ~/ 12 : months}';
+    } else if (dueDate != null) {
+      _absoluteDate = dueDate;
+      _dateMode = DueInputMode.absolute;
     }
-    if (interval.mileage case final mileage?) {
-      mileageController.text = '$mileage';
-    }
+    final mileage = interval.mileage ?? dueMileage;
+    _mileageMode = interval.mileage == null && dueMileage != null
+        ? DueInputMode.absolute
+        : DueInputMode.relative;
+    mileageController.text = mileage?.toString() ?? '';
+    notifyListeners();
   }
+
+  /// Réinitialise la saisie en mode relatif, pré-remplie avec [interval]
+  /// (ex. l'intervalle de l'échéance précédente).
+  void prefill(ScheduleInterval interval) => reset(interval: interval);
 
   /// Change le mode de saisie de la date, en reprenant la date déjà
   /// calculée lors du passage en mode fixe.
@@ -120,6 +125,17 @@ class ScheduleDueController extends ChangeNotifier {
     // Met aussi à jour les écouteurs via le contrôleur de texte.
     mileageController.text = converted?.toString() ?? '';
   }
+
+  /// Intervalle saisi en mode relatif, à conserver avec l'échéance ; les
+  /// dimensions saisies en valeur fixe sont nulles.
+  ScheduleInterval get relativeInterval => ScheduleInterval(
+    mileage: _mileageMode == DueInputMode.relative ? mileageValue : null,
+    months: switch ((_dateMode, durationAmount)) {
+      (DueInputMode.relative, final amount?) =>
+        _unit == ScheduleIntervalUnit.years ? amount * 12 : amount,
+      _ => null,
+    },
+  );
 
   DateTime? resolveDueDate(DateTime reference) => switch (_dateMode) {
     DueInputMode.absolute => _absoluteDate,

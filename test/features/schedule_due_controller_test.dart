@@ -40,6 +40,22 @@ void main() {
     controller.dispose();
   });
 
+  test("reset reprend en mode relatif les dimensions d'intervalle connu", () {
+    final controller = ScheduleDueController()
+      ..reset(
+        dueDate: DateTime(2027, 3, 1),
+        dueMileage: 50000,
+        interval: const ScheduleInterval(months: 24),
+      );
+
+    expect(controller.dateMode, DueInputMode.relative);
+    expect(controller.unit, ScheduleIntervalUnit.years);
+    expect(controller.durationController.text, '2');
+    expect(controller.mileageMode, DueInputMode.absolute);
+    expect(controller.resolveDueMileage(42000), 50000);
+    controller.dispose();
+  });
+
   test('changer de mode convertit la valeur déjà saisie', () {
     final controller = ScheduleDueController();
     controller.mileageController.text = '6000';
@@ -61,6 +77,18 @@ void main() {
     expect(controller.hasAnyDue, isFalse);
     controller.absoluteDate = DateTime(2027);
     expect(controller.hasAnyDue, isTrue);
+    controller.dispose();
+  });
+
+  test("relativeInterval n'inclut que les valeurs saisies en mode « dans »", () {
+    final controller = ScheduleDueController()
+      ..unit = ScheduleIntervalUnit.years
+      ..setMileageMode(DueInputMode.absolute, 42000);
+    controller.durationController.text = '2';
+    controller.mileageController.text = '50000';
+
+    expect(controller.relativeInterval.months, 24);
+    expect(controller.relativeInterval.mileage, isNull);
     controller.dispose();
   });
 

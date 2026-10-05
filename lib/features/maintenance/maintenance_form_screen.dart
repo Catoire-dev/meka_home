@@ -240,6 +240,7 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
 
   MaintenanceSchedule? _buildNextSchedule() {
     if (widget.isEditing || !_planNext) return null;
+    final interval = _nextDue.relativeInterval;
     return MaintenanceSchedule(
       id: _matchingSchedule?.id ?? '',
       vehicleId: widget.vehicleId,
@@ -247,6 +248,8 @@ class _MaintenanceFormScreenState extends ConsumerState<MaintenanceFormScreen> {
       dueDate: _nextDue.resolveDueDate(_date),
       dueMileage: _nextDue.resolveDueMileage(_referenceMileage),
       comment: _matchingSchedule?.comment,
+      intervalMonths: interval.months,
+      intervalMileage: interval.mileage,
     );
   }
 
